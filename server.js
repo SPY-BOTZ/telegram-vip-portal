@@ -1,15 +1,13 @@
 require('dotenv').config();
 const express = require('express');
-const crypto = require('crypto');
-const TelegramBot = require('node-telegram-bot-api');
 const fs = require('fs');
 
 const app = express();
 app.use(express.json());
 app.use(express.static('public'));
 
-const CASHFREE_APP_ID = process.env.RAZORPAY_KEY_ID; // AppID yahan map kiya hai
-const CASHFREE_SECRET_KEY = process.env.RAZORPAY_KEY_SECRET; // Secret Key yahan map kiya hai
+const CASHFREE_APP_ID = process.env.RAZORPAY_KEY_ID || process.env.CASHFREE_APP_ID;
+const CASHFREE_SECRET_KEY = process.env.RAZORPAY_KEY_SECRET || process.env.CASHFREE_SECRET_KEY;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 const CHANNELS_CONFIG = {
@@ -41,8 +39,6 @@ const CHANNELS_CONFIG = {
     }
 };
 
-const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: false });
-
 const DB_FILE = 'subscriptions.json';
 function loadSubscriptions() {
     if (!fs.existsSync(DB_FILE)) return [];
@@ -52,32 +48,52 @@ function saveSubscriptions(subs) {
     fs.writeFileSync(DB_FILE, JSON.stringify(subs, null, 2));
 }
 
-// 1. Create Cashfree Order API
+async function sendTelegramMessage(chatId, text) {
+    try {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'Markdown' })
+        });
+    } catch (err) {
+        console.error("Telegram Error:", err.message);
+    }
+}
+
+async function createTelegramInviteLink(chatId) {
+    try {
+        const expireDate = Math.floor(Date.now() / 1000) + 86400;
+        const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/createChatInviteLink`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, member_limit: 1, expire_date: expireDate })
+        });
+        const data = await res.json();
+        return data.ok ? data.result.invite_link : null;
+    } catch (err) {
+        console.error("Invite Link Error:", err.message);
+        return null;
+    }
+}
+
 app.post('/create-order', async (req, res) => {
     try {
         const { channelKey, planKey, telegramId } = req.body;
         const channelData = CHANNELS_CONFIG[channelKey];
-
         if(!channelData || !channelData.plans[planKey]) {
             return res.status(400).json({ success: false, message: "Invalid Channel or Plan" });
         }
-
         const selectedPlan = channelData.plans[planKey];
-
         if (planKey === 'trial') {
             return res.json({ success: true, isTrial: true, planName: selectedPlan.name });
         }
 
-        // Cashfree API Call to Create Order
         const orderId = `order_${channelKey}_${planKey}_${Date.now()}`;
         const payload = {
             order_id: orderId,
             order_amount: selectedPlan.amount,
             order_currency: "INR",
-            customer_details: {
-                customer_id: String(telegramId),
-                customer_phone: "9999999999"
-            }
+            customer_details: { customer_id: String(telegramId), customer_phone: "9999999999" }
         };
 
         const response = await fetch("https://api.cashfree.com/pg/orders", {
@@ -90,76 +106,55 @@ app.post('/create-order', async (req, res) => {
             },
             body: JSON.stringify(payload)
         });
-
         const data = await response.json();
-
         if (response.ok && data.payment_session_id) {
-            res.json({
-                success: true,
-                isTrial: false,
-                payment_session_id: data.payment_session_id,
-                order_id: orderId,
-                planName: selectedPlan.name
-            });
+            res.json({ success: true, isTrial: false, payment_session_id: data.payment_session_id, order_id: orderId, planName: selectedPlan.name });
         } else {
-            console.error("Cashfree Error:", data);
             res.status(500).json({ success: false, message: data.message || "Payment Gateway Error" });
         }
     } catch (error) {
-        console.error("Server Error:", error);
         res.status(500).json({ success: false, message: "Server Error" });
     }
 });
 
-// 2. Direct Activate Trial API
 app.post('/activate-trial', async (req, res) => {
     try {
         const { telegramId, channelKey } = req.body;
         const channelData = CHANNELS_CONFIG[channelKey];
-        const selectedPlan = channelData.plans['trial'];
-
         let subs = loadSubscriptions();
-        const existingTrial = subs.find(s => s.telegramId === String(telegramId) && s.channelKey === channelKey && s.isTrial);
-        if (existingTrial) {
+        if (subs.find(s => s.telegramId === String(telegramId) && s.channelKey === channelKey && s.isTrial)) {
             return res.json({ success: false, message: "Aapne is channel ka free trial pehle hi use kar liya hai!" });
         }
 
-        const inviteLink = await bot.createChatInviteLink(channelData.vipId, {
-            member_limit: 1,
-            expire_date: Math.floor(Date.now() / 1000) + 86400
-        });
-
-        const expiryTime = Date.now() + selectedPlan.ms;
+        const inviteLink = await createTelegramInviteLink(channelData.vipId);
+        if(!inviteLink) return res.status(500).json({ success: false, message: "Bot ko channel ka admin banayein!" });
 
         subs.push({
             telegramId: String(telegramId),
             channelKey: channelKey,
             vipId: channelData.vipId,
-            planName: selectedPlan.name,
-            expiryTime: expiryTime,
+            planName: '10 Mins Free Trial',
+            expiryTime: Date.now() + 10 * 60 * 1000,
             isTrial: true,
             remindersSent: 4
         });
         saveSubscriptions(subs);
 
-        await bot.sendMessage(telegramId, `🎉 *10-MINUTES FREE TRIAL ACTIVATED!*\n\nChannel: *${channelData.name}* \n\nAccess Link:\n${inviteLink.invite_link}`, { parse_mode: 'Markdown' });
-        await bot.sendMessage(channelData.logId, `🚀 *NEW FREE TRIAL USER*\n👤 *User ID:* \`${telegramId}\``, { parse_mode: 'Markdown' });
+        await sendTelegramMessage(telegramId, `🎉 *10-MINUTES FREE TRIAL ACTIVATED!*\n\nChannel: *${channelData.name}*\n\nAccess Link:\n${inviteLink}`);
+        await sendTelegramMessage(channelData.logId, `🚀 *NEW FREE TRIAL USER*\n👤 *User ID:* \`${telegramId}\``);
 
-        res.json({ success: true, invite_link: inviteLink.invite_link });
+        res.json({ success: true, invite_link: inviteLink });
     } catch (error) {
-        console.error(error);
         res.status(500).json({ success: false, message: "Trial Failed" });
     }
 });
 
-// 3. Verify Cashfree Payment Success
 app.post('/verify-payment', async (req, res) => {
     try {
         const { order_id, telegramId, channelKey, planKey } = req.body;
         const channelData = CHANNELS_CONFIG[channelKey];
         const selectedPlan = channelData.plans[planKey];
 
-        // Verify order status from Cashfree server
         const response = await fetch(`https://api.cashfree.com/pg/orders/${order_id}`, {
             method: "GET",
             headers: {
@@ -168,16 +163,11 @@ app.post('/verify-payment', async (req, res) => {
                 "x-api-version": "2023-08-01"
             }
         });
-
         const orderData = await response.json();
 
         if (response.ok && orderData.order_status === "PAID") {
-            const inviteLink = await bot.createChatInviteLink(channelData.vipId, {
-                member_limit: 1,
-                expire_date: Math.floor(Date.now() / 1000) + 86400
-            });
-
-            const expiryTime = Date.now() + selectedPlan.ms;
+            const inviteLink = await createTelegramInviteLink(channelData.vipId);
+            if(!inviteLink) return res.status(500).json({ success: false, message: "Bot ko channel ka admin banayein!" });
 
             let subs = loadSubscriptions();
             subs.push({
@@ -185,68 +175,23 @@ app.post('/verify-payment', async (req, res) => {
                 channelKey: channelKey,
                 vipId: channelData.vipId,
                 planName: selectedPlan.name,
-                expiryTime: expiryTime,
+                expiryTime: Date.now() + selectedPlan.ms,
                 isTrial: false,
                 remindersSent: 0
             });
             saveSubscriptions(subs);
 
-            await bot.sendMessage(telegramId, `⚡ *PAYMENT CONFIRMED!*\n\nChannel: *${channelData.name}*\nPlan: *${selectedPlan.name}*\n\nSecure Link:\n${inviteLink.invite_link}`, { parse_mode: 'Markdown' });
-            await bot.sendMessage(channelData.logId, `🔔 *NEW VIP PURCHASE*\n👤 *User ID:* \`${telegramId}\`\n💎 *Plan:* ${selectedPlan.name}\n💰 *Amount:* ₹${selectedPlan.amount}`, { parse_mode: 'Markdown' });
+            await sendTelegramMessage(telegramId, `⚡ *PAYMENT CONFIRMED!*\n\nChannel: *${channelData.name}*\nPlan: *${selectedPlan.name}*\n\nSecure Link:\n${inviteLink}`);
+            await sendTelegramMessage(channelData.logId, `🔔 *NEW VIP PURCHASE*\n👤 *User ID:* \`${telegramId}\`\n💎 *Plan:* ${selectedPlan.name}\n💰 *Amount:* ₹${selectedPlan.amount}`);
 
-            res.json({ success: true, invite_link: inviteLink.invite_link });
+            res.json({ success: true, invite_link: inviteLink });
         } else {
             res.status(400).json({ success: false, message: "Payment not completed yet!" });
         }
     } catch (error) {
-        console.error(error);
         res.status(500).json({ success: false, message: "Verification Failed" });
     }
 });
 
-// 4. Background Expiry & Reminder Cron Worker
-setInterval(async () => {
-    try {
-        let subs = loadSubscriptions();
-        if (subs.length === 0) return;
-
-        const now = Date.now();
-        let updatedSubs = [];
-
-        for (let sub of subs) {
-            const timeLeft = sub.expiryTime - now;
-            const oneDayMs = 24 * 60 * 60 * 1000;
-
-            if (timeLeft <= 0) {
-                try {
-                    await bot.banChatMember(sub.vipId, sub.telegramId);
-                    await bot.unbanChatMember(sub.vipId, sub.telegramId);
-                    
-                    const msg = sub.isTrial 
-                        ? `⌛ *Aapka 10-minute ka Free Trial samapt ho gaya hai!*`
-                        : `❌ *Your VIP Subscription has Expired!*`;
-                    
-                    await bot.sendMessage(sub.telegramId, msg, { parse_mode: 'Markdown' });
-                } catch (err) {
-                    console.error(`Kick error:`, err.message);
-                }
-            } else {
-                if (!sub.isTrial && timeLeft <= oneDayMs) {
-                    if (sub.remindersSent === undefined) sub.remindersSent = 0;
-                    if (sub.remindersSent < 4) {
-                        let hoursLeft = Math.ceil(timeLeft / (60 * 60 * 1000));
-                        await bot.sendMessage(sub.telegramId, `⚠️ *REMINDER (${sub.remindersSent + 1}/4): Plan Expires Soon!*\nAapka plan *${hoursLeft} hours* me khatam hone wala hai.`, { parse_mode: 'Markdown' });
-                        sub.remindersSent += 1;
-                    }
-                }
-                updatedSubs.push(sub);
-            }
-        }
-        saveSubscriptions(updatedSubs);
-    } catch (error) {
-        console.error("Cron Error:", error);
-    }
-}, 60 * 1000);
-
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running with Cashfree on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
