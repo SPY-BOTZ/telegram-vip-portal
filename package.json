@@ -1,15 +1,14 @@
 {
-  "name": "telegram-payment-bot",
+  "name": "telegram-vip-portal",
   "version": "1.0.0",
-  "description": "VIP Telegram Subscription Portal with Multi-Month Plans",
+  "description": "Telegram VIP Channel Subscription Portal with Cashfree",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "dotenv": "^16.4.0",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "node-telegram-bot-api": "^0.65.1",
-    "razorpay": "^2.9.4"
+    "node-telegram-bot-api": "^0.65.1"
   }
 }
