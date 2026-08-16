@@ -3,188 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIP Portal - Subscription</title>
+    <title>VIP Portal - Direct Payment</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background: #1e293b; padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-        h2 { text-align: center; color: #38bdf8; margin-bottom: 20px; }
-        label { display: block; margin-top: 15px; font-weight: 600; font-size: 14px; }
-        select, input, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: none; font-size: 16px; outline: none; box-sizing: border-box; }
-        select, input[type="text"], input[type="file"] { background: #334155; color: #fff; }
-        button { background: #0284c7; color: #fff; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 20px; }
-        button:hover { background: #0369a1; }
-        .upi-btns { display: flex; gap: 8px; margin-top: 10px; }
-        .upi-btns a { flex: 1; padding: 10px 5px; text-align: center; background: #334155; color: #38bdf8; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; }
-        .upi-btns a:hover { background: #475569; }
-        .qr-box { background: #334155; padding: 15px; border-radius: 8px; text-align: center; margin-top: 15px; display: none; }
-        .qr-box img { max-width: 140px; border-radius: 6px; }
-        .result-box { margin-top: 20px; padding: 15px; background: #334155; border-radius: 8px; text-align: center; display: none; word-break: break-all; }
-        .result-box a { color: #38bdf8; font-weight: bold; text-decoration: underline; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { background: #1e293b; padding: 20px; border-radius: 12px; width: 100%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        h2 { text-align: center; color: #38bdf8; margin-bottom: 5px; font-size: 22px; }
+        .subtitle { text-align: center; color: #94a3b8; font-size: 13px; margin-bottom: 20px; }
+        
+        label { display: block; margin-top: 10px; font-weight: 600; font-size: 13px; color: #cbd5e1; }
+        select { width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: none; font-size: 15px; background: #334155; color: #fff; outline: none; }
+
+        .plan-card { background: #334155; padding: 12px 15px; border-radius: 8px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #475569; }
+        .plan-info h4 { margin: 0; font-size: 15px; color: #f8fafc; }
+        .plan-info p { margin: 3px 0 0 0; font-size: 13px; color: #38bdf8; font-weight: bold; }
+        
+        .pay-btn { background: #10b981; color: #fff; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; transition: background 0.2s; white-space: nowrap; }
+        .pay-btn:hover { background: #059669; }
+        
+        .qr-section { margin-top: 20px; background: #334155; padding: 15px; border-radius: 8px; text-align: center; }
+        .qr-section img { max-width: 130px; border-radius: 6px; margin-top: 5px; }
+
+        .proof-box { margin-top: 20px; background: #1e293b; padding: 15px; border-radius: 8px; border: 1px dashed #475569; }
+        input[type="text"], input[type="file"] { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: none; font-size: 14px; background: #334155; color: #fff; box-sizing: border-box; outline: none; }
+        
+        .submit-btn { width: 100%; background: #0284c7; color: #fff; padding: 12px; border-radius: 8px; border: none; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .submit-btn:hover { background: #0369a1; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>🔥 VIP Portal</h2>
+    <div class="subtitle">Apna pasandida plan chunein aur direct pay karein</div>
     
     <label for="channelSelect">Select Channel:</label>
-    <select id="channelSelect">
+    <select id="channelSelect" onchange="updateLinks()">
         <option value="channel1">VIP Movie & Series Channel</option>
         <option value="channel2">VIP Premium Bot & Tools Channel</option>
     </select>
 
-    <label for="planSelect">Select Plan:</label>
-    <select id="planSelect" onchange="checkPlanType()">
-        <option value="trial">Free Trial (10 Mins)</option>
-        <option value="15days">15 Days Pass (₹99)</option>
-        <option value="1month">1 Month Pass (₹199)</option>
-        <option value="2months">2 Months Pass (₹369)</option>
-        <option value="3months">3 Months Gold (₹499)</option>
-        <option value="4months">4 Months Diamond (₹649)</option>
-    </select>
+    <!-- Plans List with Direct Pay Buttons -->
+    <div id="plansList"></div>
 
-    <!-- Manual Payment Section -->
-    <div id="manualSection" class="qr-box">
-        <p id="planPriceText" style="margin: 0 0 10px 0; font-size: 14px; color: #38bdf8; font-weight: bold;"></p>
-        <p style="margin: 0 0 8px 0; font-size: 12px; color: #94a3b8;">Direct Payment App:</p>
-        
-        <div class="upi-btns">
-            <a id="gpayBtn" href="#" target="_blank">GPay</a>
-            <a id="phonepeBtn" href="#" target="_blank">PhonePe</a>
-            <a id="paytmBtn" href="#" target="_blank">Paytm</a>
-        </div>
-
-        <p style="margin: 12px 0 5px 0; font-size: 12px; color: #94a3b8;">Ya QR Code Scan Karein:</p>
+    <!-- QR Code Option -->
+    <div class="qr-section">
+        <p style="margin: 0; font-size: 12px; color: #94a3b8;">Ya QR Code Scan Karke Payment Karein:</p>
         <img id="qrImg" src="" alt="UPI QR">
-        
-        <label style="text-align: left; font-size: 13px;" for="utrInput">Enter UTR / Transaction ID:</label>
-        <input type="text" id="utrInput" placeholder="e.g. 435214xxxxxx">
-
-        <label style="text-align: left; font-size: 13px;" for="screenshotInput">Upload Payment Screenshot:</label>
-        <input type="file" id="screenshotInput" accept="image/*">
     </div>
 
-    <button id="actionBtn" onclick="handleSubmit()">Activate Free Trial</button>
+    <!-- Payment Proof Submission Box -->
+    <div class="proof-box">
+        <label for="utrInput">Enter UTR / Transaction ID (Payment ke baad):</label>
+        <input type="text" id="utrInput" placeholder="e.g. 435214xxxxxx">
 
-    <div id="resultBox" class="result-box">
-        <p id="resultText"></p>
+        <label for="screenshotInput" style="margin-top: 12px;">Upload Payment Screenshot:</label>
+        <input type="file" id="screenshotInput" accept="image/*">
+
+        <button class="submit-btn" onclick="submitProof()">Submit Proof & Get Verified</button>
     </div>
 </div>
 
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const telegramId = urlParams.get('userid');
-    const myUpiId = "yourupi@ybl"; // <-- Yahan apni UPI ID daal dena (jaise merchant@paytm)
+    const myUpiId = "yourupi@ybl"; // <-- Yahan apni asli UPI ID daal dena (jaise merchant@paytm)
 
-    // Channel-wise pricing configuration
-    const channelPrices = {
-        'channel1': { '15days': 99, '1month': 199, '2months': 369, '3months': 499, '4months': 649 },
-        'channel2': { '15days': 149, '1month': 299, '2months': 549, '3months': 799, '4months': 999 }
+    // Channel wise plans and prices
+    const channelData = {
+        'channel1': [
+            { key: 'trial', name: 'Free Trial (10 Mins)', price: 0 },
+            { key: '15days', name: '15 Days Pass', price: 99 },
+            { key: '1month', name: '1 Month Pass', price: 199 },
+            { key: '2months', name: '2 Months Pass', price: 369 },
+            { key: '3months', name: '3 Months Gold', price: 499 },
+            { key: '4months', name: '4 Months Diamond', price: 649 }
+        ],
+        'channel2': [
+            { key: 'trial', name: 'Free Trial (10 Mins)', price: 0 },
+            { key: '15days', name: '15 Days Pass', price: 149 },
+            { key: '1month', name: '1 Month Pass', price: 299 },
+            { key: '2months', name: '2 Months Pass', price: 549 },
+            { key: '3months', name: '3 Months Gold', price: 799 },
+            { key: '4months', name: '4 Months Diamond', price: 999 }
+        ]
     };
 
-    function checkPlanType() {
+    let selectedPlanKey = '15days'; // Default
+
+    function updateLinks() {
         const channelKey = document.getElementById('channelSelect').value;
-        const planKey = document.getElementById('planSelect').value;
-        const manualSection = document.getElementById('manualSection');
-        const btn = document.getElementById('actionBtn');
+        const plans = channelData[channelKey];
+        const plansListDiv = document.getElementById('plansList');
+        plansListDiv.innerHTML = '';
 
-        if (planKey === 'trial') {
-            manualSection.style.display = 'none';
-            btn.innerText = 'Activate Free Trial';
-        } else {
-            manualSection.style.display = 'block';
-            btn.innerText = 'Submit Payment Details & Redirect';
-
-            const amount = channelPrices[channelKey][planKey] || 99;
-            document.getElementById('planPriceText').innerText = `Amount to Pay: ₹${amount}`;
-
-            const upiLink = `upi://pay?pa=${myUpiId}&pn=VIPPortal&am=${amount}&cu=INR`;
+        plans.forEach(plan => {
+            const upiLink = plan.price === 0 ? '#' : `upi://pay?pa=${myUpiId}&pn=VIPPortal&am=${plan.price}&cu=INR`;
             
-            document.getElementById('gpayBtn').href = upiLink;
-            document.getElementById('phonepeBtn').href = upiLink;
-            document.getElementById('paytmBtn').href = upiLink;
-            document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(upiLink)}`;
+            const card = document.createElement('div');
+            card.className = 'plan-card';
+            
+            let actionBtnHtml = '';
+            if (plan.price === 0) {
+                actionBtnHtml = `<button class="pay-btn" style="background:#0284c7;" onclick="selectTrial('${plan.key}')">Active Trial</button>`;
+            } else {
+                actionBtnHtml = `<a class="pay-btn" href="${upiLink}" onclick="setPlan('${plan.key}')" target="_blank">Pay ₹${plan.price}</a>`;
+            }
+
+            card.innerHTML = `
+                <div class="plan-info">
+                    <h4>${plan.name}</h4>
+                    <p>${plan.price === 0 ? 'FREE' : '₹' + plan.price}</p>
+                </div>
+                ${actionBtnHtml}
+            `;
+            plansListDiv.appendChild(card);
+        });
+
+        // Default QR for first paid plan
+        updateQR(channelKey, '15days');
+    }
+
+    function setPlan(planKey) {
+        selectedPlanKey = planKey;
+        const channelKey = document.getElementById('channelSelect').value;
+        updateQR(channelKey, planKey);
+    }
+
+    function updateQR(channelKey, planKey) {
+        const plans = channelData[channelKey];
+        const currentPlan = plans.find(p => p.key === planKey);
+        if (currentPlan && currentPlan.price > 0) {
+            const upiLink = `upi://pay?pa=${myUpiId}&pn=VIPPortal&am=${currentPlan.price}&cu=INR`;
+            document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(upiLink)}`;
         }
     }
 
-    // Update prices dynamically when channel changes too
-    document.getElementById('channelSelect').addEventListener('change', checkPlanType);
-
-    async function handleSubmit() {
+    async function selectTrial(planKey) {
         if (!telegramId) {
-            alert("Telegram User ID nahi mili! Kripya bot se dobara link open karein.");
+            alert("Telegram User ID nahi mili! Bot se link dobara open karein.");
+            return;
+        }
+        const channelKey = document.getElementById('channelSelect').value;
+        const res = await fetch('/activate-trial', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ telegramId, channelKey })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert("Free Trial Activated! Bot par link bhej diya gaya hai.");
+            window.location.href = `https://t.me/Payments_Robot_bot?start=payment_done`;
+        } else {
+            alert(data.message);
+        }
+    }
+
+    async function submitProof() {
+        if (!telegramId) {
+            alert("Telegram User ID nahi mili!");
             return;
         }
 
+        const utr = document.getElementById('utrInput').value;
+        const screenshotFile = document.getElementById('screenshotInput').files[0];
         const channelKey = document.getElementById('channelSelect').value;
-        const planKey = document.getElementById('planSelect').value;
-        const btn = document.getElementById('actionBtn');
 
-        if (planKey === 'trial') {
-            btn.innerText = "Processing...";
-            const res = await fetch('/activate-trial', {
+        if (!utr) {
+            alert("Kripya payment karne ke baad UTR / Transaction ID enter karein!");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('telegramId', telegramId);
+        formData.append('channelKey', channelKey);
+        formData.append('planKey', selectedPlanKey);
+        formData.append('utr', utr);
+        if (screenshotFile) {
+            formData.append('screenshot', screenshotFile);
+        }
+
+        try {
+            const res = await fetch('/submit-manual-payment', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegramId, channelKey })
+                body: formData
             });
             const data = await res.json();
-            btn.innerText = "Activate Free Trial";
-            showResult(data);
-        } else {
-            const utr = document.getElementById('utrInput').value;
-            const screenshotFile = document.getElementById('screenshotInput').files[0];
-
-            if (!utr) {
-                alert("Kripya payment karne ke baad UTR / Transaction ID enter karein!");
-                return;
-            }
-
-            btn.innerText = "Submitting...";
-            const formData = new FormData();
-            formData.append('telegramId', telegramId);
-            formData.append('channelKey', channelKey);
-            formData.append('planKey', planKey);
-            formData.append('utr', utr);
-            if (screenshotFile) {
-                formData.append('screenshot', screenshotFile);
-            }
-
-            try {
-                const res = await fetch('/submit-manual-payment', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await res.json();
-                
-                if (data.success) {
-                    alert("Payment details bhej di gayi hain! Ab aapko bot par redirect kiya ja raha hai.");
-                    window.location.href = `https://t.me/Payments_Robot_bot?start=payment_done`;
-                } else {
-                    alert(data.message || "Kuch error aa gaya!");
-                    btn.innerText = "Submit Payment Details & Redirect";
-                }
-            } catch (err) {
-                alert("Server error! Kripya dobara try karein.");
-                btn.innerText = "Submit Payment Details & Redirect";
-            }
-        }
-    }
-
-    function showResult(data) {
-        const box = document.getElementById('resultBox');
-        const text = document.getElementById('resultText');
-        box.style.display = 'block';
-
-        if (data.success) {
-            if (data.invite_link) {
-                text.innerHTML = `✅ Success!<br><br><a href="${data.invite_link}" target="_blank">Join Channel (Valid for 12 Hours)</a>`;
+            if (data.success) {
+                alert("Payment details bhej di gayi hain! Ab aapko bot par redirect kiya ja raha hai.");
+                window.location.href = `https://t.me/Payments_Robot_bot?start=payment_done`;
             } else {
-                text.innerText = data.message;
+                alert(data.message || "Error!");
             }
-        } else {
-            text.innerText = data.message || "Kuch galat ho gaya!";
+        } catch (err) {
+            alert("Server Error! Dobara koshish karein.");
         }
     }
+
+    // Load initial list
+    updateLinks();
 </script>
 
 </body>
