@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CYBER-VIP | Multi-Channel Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <!-- Cashfree Checkout SDK -->
+    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .neon-glow { box-shadow: 0 0 35px rgba(139, 92, 246, 0.2); }
@@ -48,6 +49,7 @@
             <div>
                 <label class="block text-[11px] font-bold uppercase tracking-wider text-cyan-400 mb-2">Select Duration Plan</label>
                 
+                <!-- 10 Minutes Free Trial Button -->
                 <button onclick="selectPlan('trial', this)" data-plan="trial" class="plan-btn w-full mb-2.5 p-3 rounded-xl border border-emerald-500/80 bg-slate-900/80 hover:border-emerald-400 text-left transition flex justify-between items-center group ring-1 ring-emerald-500/30">
                     <div>
                         <span class="text-[9px] font-extrabold uppercase text-emerald-400 block">✨ Special Offer</span>
@@ -97,9 +99,9 @@
     </div>
 
     <script>
+        const cashfree = Cashfree({ mode: "production" }); // Agar sandbox testing karni ho toh "sandbox" kar sakte hain
         let selectedPlanKey = '3months';
 
-        // Automatically fetch User ID from URL query parameters (e.g., website.com/?userid=123456)
         document.addEventListener("DOMContentLoaded", () => {
             const urlParams = new URLSearchParams(window.location.search);
             const userIdFromUrl = urlParams.get('userid') || urlParams.get('id');
@@ -138,12 +140,12 @@
             const res = await fetch('/create-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ channelKey, planKey: selectedPlanKey })
+                body: JSON.stringify({ channelKey, planKey: selectedPlanKey, telegramId })
             });
             const data = await res.json();
 
             if(!data.success) {
-                alert('Action failed.');
+                alert('❌ Error: ' + (data.message || 'Action failed'));
                 return;
             }
 
@@ -155,7 +157,7 @@
                 });
                 const trialData = await trialRes.json();
                 if(trialData.success) {
-                    alert('🎉 10-Mins Free Trial Activated! Aapke Telegram par access link bhej diya gaya hai.');
+                    alert('🎉 10-Mins Free Trial Activated! Telegram inbox check karein.');
                     window.location.href = trialData.invite_link;
                 } else {
                     alert('❌ ' + trialData.message);
@@ -163,21 +165,23 @@
                 return;
             }
 
-            const options = {
-                "key": "YOUR_RAZORPAY_KEY_ID",
-                "amount": data.order.amount,
-                "currency": "INR",
-                "name": "CYBER-VIP SECUREVAULT",
-                "description": data.planName,
-                "order_id": data.order.id,
-                "handler": async function (response) {
+            // Cashfree Checkout Flow
+            let checkoutOptions = {
+                paymentSessionId: data.payment_session_id,
+                redirectTarget: "_modal"
+            };
+
+            cashfree.checkout(checkoutOptions).then(async function(result) {
+                if(result.error){
+                    alert("Payment failed: " + result.error.message);
+                }
+                if(result.payment) {
+                    // Payment successful, verify from backend
                     const verifyRes = await fetch('/verify-payment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_signature: response.razorpay_signature,
+                            order_id: data.order_id,
                             telegramId: telegramId,
                             channelKey: channelKey,
                             planKey: selectedPlanKey
@@ -185,16 +189,13 @@
                     });
                     const verifyData = await verifyRes.json();
                     if(verifyData.success) {
-                        alert('✨ Payment Successful! Check Telegram inbox.');
+                        alert('✨ Payment Verified & Successful! Telegram par link bhej diya gaya hai.');
                         window.location.href = verifyData.invite_link;
                     } else {
-                        alert('❌ Verification failed.');
+                        alert('❌ ' + verifyData.message);
                     }
-                },
-                "theme": { "color": "#06b6d4" }
-            };
-            const rzp = new Razorpay(options);
-            rzp.open();
+                }
+            });
         }
     </script>
 </body>
