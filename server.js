@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const ADMIN_TELEGRAM_ID = process.env.ADMIN_TELEGRAM_ID || "6306052652"; // Aapki Telegram ID
+const ADMIN_TELEGRAM_ID = process.env.ADMIN_TELEGRAM_ID || "1249672673"; // Aapki Telegram ID
 
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: { interval: 2000, autoStart: true, params: { timeout: 10 } } });
 const WEB_APP_URL = process.env.WEB_APP_URL || "https://rainy-manya-bhaiforik76-fe95b73e.koyeb.app";
