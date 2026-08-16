@@ -8,14 +8,8 @@
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .neon-glow {
-            box-shadow: 0 0 35px rgba(139, 92, 246, 0.2);
-        }
-        .cyber-card {
-            background: rgba(15, 23, 42, 0.88);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+        .neon-glow { box-shadow: 0 0 35px rgba(139, 92, 246, 0.2); }
+        .cyber-card { background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
     </style>
 </head>
 <body class="bg-[#030712] text-slate-100 font-sans min-h-screen flex flex-col items-center justify-center p-4 selection:bg-cyan-500 selection:text-black">
@@ -25,7 +19,7 @@
         <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-cyan-600/20 rounded-full blur-3xl pointer-events-none"></div>
 
         <div class="text-center mb-5 relative z-10">
-            <a href="https://t.me/payment_prime" target="_blank" class="inline-flex items-center space-x-1.5 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20 mb-3 hover:bg-emerald-500/20 transition cursor-pointer">
+            <a href="https://t.me/YOUR_PAYMENT_PROOF_CHANNEL" target="_blank" class="inline-flex items-center space-x-1.5 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20 mb-3 hover:bg-emerald-500/20 transition cursor-pointer">
                 <i class="fa-solid fa-shield-check"></i>
                 <span>No Scam • Click for Payment Proofs <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[9px]"></i></span>
             </a>
@@ -34,14 +28,12 @@
             <h1 class="text-2xl md:text-3xl font-black tracking-tight bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 bg-clip-text text-transparent">
                 VIP Membership Portal
             </h1>
-            <p class="text-xs text-slate-400 mt-1">Select your desired channel, duration, and get instant access.</p>
+            <p class="text-xs text-slate-400 mt-1">Free trial available! Test before you buy.</p>
         </div>
 
         <div class="space-y-4 relative z-10">
             <div>
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-cyan-400 mb-1.5">
-                    <i class="fa-solid fa-tv mr-1"></i> Select VIP Channel
-                </label>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-cyan-400 mb-1.5"><i class="fa-solid fa-tv mr-1"></i> Select VIP Channel</label>
                 <select id="channelSelect" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-400 transition">
                     <option value="channel1">🎬 Channel 1: VIP Movie & Series</option>
                     <option value="channel2">🤖 Channel 2: Premium Bot & Tools</option>
@@ -49,46 +41,38 @@
             </div>
 
             <div>
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-cyan-400 mb-1.5">
-                    <i class="fa-brands fa-telegram mr-1"></i> Telegram Numeric User ID
-                </label>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-cyan-400 mb-1.5"><i class="fa-brands fa-telegram mr-1"></i> Telegram Numeric User ID</label>
                 <input type="text" id="telegramId" placeholder="e.g. 123456789" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-400 transition shadow-inner">
             </div>
 
             <div>
                 <label class="block text-[11px] font-bold uppercase tracking-wider text-cyan-400 mb-2">Select Duration Plan</label>
                 
+                <!-- Free Trial Special Button (Full Width Top) -->
+                <button onclick="selectPlan('trial', this)" data-plan="trial" class="plan-btn w-full mb-2.5 p-3 rounded-xl border border-emerald-500/80 bg-slate-900/80 hover:border-emerald-400 text-left transition flex justify-between items-center group ring-1 ring-emerald-500/30">
+                    <div>
+                        <span class="text-[9px] font-extrabold uppercase text-emerald-400 block">✨ Try Before You Buy</span>
+                        <span class="text-sm font-bold text-white group-hover:text-emerald-300">10 Mins Free Trial</span>
+                    </div>
+                    <span class="text-emerald-400 font-extrabold text-base">FREE</span>
+                </button>
+
                 <div class="grid grid-cols-2 gap-2.5">
                     <button onclick="selectPlan('15days', this)" data-plan="15days" class="plan-btn p-3 rounded-xl border border-slate-700/80 bg-slate-900/60 hover:border-cyan-400 text-left transition flex flex-col justify-between group">
-                        <span class="text-[11px] font-semibold text-slate-400 group-hover:text-cyan-300">15 Days</span>
-                        <div class="flex justify-between items-end mt-1">
-                            <span class="text-sm font-bold text-white">Trial</span>
-                            <span class="text-cyan-400 font-extrabold text-base">₹99+</span>
-                        </div>
+                        <span class="text-[11px] font-semibold text-slate-400">15 Days</span>
+                        <div class="flex justify-between items-end mt-1"><span class="text-sm font-bold text-white">Trial</span><span class="text-cyan-400 font-extrabold text-base">₹99+</span></div>
                     </button>
-
                     <button onclick="selectPlan('1month', this)" data-plan="1month" class="plan-btn p-3 rounded-xl border border-slate-700/80 bg-slate-900/60 hover:border-purple-400 text-left transition flex flex-col justify-between group">
-                        <span class="text-[11px] font-semibold text-slate-400 group-hover:text-purple-300">1 Month</span>
-                        <div class="flex justify-between items-end mt-1">
-                            <span class="text-sm font-bold text-white">Standard</span>
-                            <span class="text-purple-400 font-extrabold text-base">₹199+</span>
-                        </div>
+                        <span class="text-[11px] font-semibold text-slate-400">1 Month</span>
+                        <div class="flex justify-between items-end mt-1"><span class="text-sm font-bold text-white">Standard</span><span class="text-purple-400 font-extrabold text-base">₹199+</span></div>
                     </button>
-
                     <button onclick="selectPlan('2months', this)" data-plan="2months" class="plan-btn p-3 rounded-xl border border-slate-700/80 bg-slate-900/60 hover:border-blue-400 text-left transition flex flex-col justify-between group">
-                        <span class="text-[11px] font-semibold text-slate-400 group-hover:text-blue-300">2 Months</span>
-                        <div class="flex justify-between items-end mt-1">
-                            <span class="text-sm font-bold text-white">Extended</span>
-                            <span class="text-blue-400 font-extrabold text-base">₹369+</span>
-                        </div>
+                        <span class="text-[11px] font-semibold text-slate-400">2 Months</span>
+                        <div class="flex justify-between items-end mt-1"><span class="text-sm font-bold text-white">Extended</span><span class="text-blue-400 font-extrabold text-base">₹369+</span></div>
                     </button>
-
                     <button onclick="selectPlan('3months', this)" data-plan="3months" class="plan-btn p-3 rounded-xl border border-amber-500/80 bg-slate-900/80 hover:border-amber-400 text-left transition flex flex-col justify-between group ring-1 ring-amber-500/30">
-                        <span class="text-[9px] font-extrabold uppercase text-amber-400">🔥 Most Popular</span>
-                        <div class="flex justify-between items-end mt-0.5">
-                            <span class="text-sm font-bold text-white">3 Months</span>
-                            <span class="text-amber-400 font-extrabold text-base">₹499+</span>
-                        </div>
+                        <span class="text-[9px] font-extrabold uppercase text-amber-400">🔥 Popular</span>
+                        <div class="flex justify-between items-end mt-0.5"><span class="text-sm font-bold text-white">3 Months</span><span class="text-amber-400 font-extrabold text-base">₹499+</span></div>
                     </button>
                 </div>
 
@@ -102,11 +86,11 @@
             </div>
 
             <div class="space-y-2 pt-1">
-                <button onclick="initiatePayment()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-600 hover:opacity-95 text-white font-black tracking-wider uppercase transition shadow-lg shadow-purple-600/30 text-xs">
+                <button onclick="handleAction()" id="actionBtn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-600 hover:opacity-95 text-white font-black tracking-wider uppercase transition shadow-lg shadow-purple-600/30 text-xs">
                     <i class="fa-solid fa-lock mr-2"></i> Proceed to Secure Payment
                 </button>
 
-                <a href="https://t.me/Botmaster55" target="_blank" class="block w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:opacity-90 text-white font-bold text-center tracking-wider uppercase transition shadow-md shadow-blue-500/20 text-xs">
+                <a href="https://t.me/YOUR_ADMIN_USERNAME" target="_blank" class="block w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:opacity-90 text-white font-bold text-center tracking-wider uppercase transition shadow-md text-xs">
                     <i class="fa-brands fa-telegram mr-2"></i> Contact Admin / Support
                 </a>
             </div>
@@ -122,16 +106,21 @@
                 b.classList.remove('ring-2', 'ring-cyan-400', 'border-cyan-400', 'bg-slate-800');
             });
             btnElement.classList.add('ring-2', 'ring-cyan-400', 'border-cyan-400', 'bg-slate-800');
+            
+            const btnText = document.getElementById('actionBtn');
+            if(key === 'trial') {
+                btnText.innerHTML = `<i class="fa-solid fa-bolt mr-2"></i> Claim 10-Mins Free Trial`;
+            } else {
+                btnText.innerHTML = `<i class="fa-solid fa-lock mr-2"></i> Proceed to Secure Payment`;
+            }
         }
 
         document.addEventListener("DOMContentLoaded", () => {
             const defaultBtn = document.querySelector("[onclick*='3months']");
-            if(defaultBtn) {
-                defaultBtn.classList.add('ring-2', 'ring-cyan-400', 'border-cyan-400', 'bg-slate-800');
-            }
+            if(defaultBtn) defaultBtn.classList.add('ring-2', 'ring-cyan-400', 'border-cyan-400', 'bg-slate-800');
         });
 
-        async function initiatePayment() {
+        async function handleAction() {
             const channelKey = document.getElementById('channelSelect').value;
             const telegramId = document.getElementById('telegramId').value.trim();
 
@@ -140,7 +129,6 @@
                 return;
             }
 
-            // 1. Create order
             const res = await fetch('/create-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -149,20 +137,36 @@
             const data = await res.json();
 
             if(!data.success) {
-                alert('Order creation failed.');
+                alert('Action failed.');
                 return;
             }
 
-            // 2. Razorpay Gateway Setup
+            // Agar Free Trial select kiya hai toh direct activate karo bina Razorpay ke
+            if(data.isTrial) {
+                const trialRes = await fetch('/activate-trial', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telegramId, channelKey })
+                });
+                const trialData = await trialRes.json();
+                if(trialData.success) {
+                    alert('🎉 Free Trial Activated! Aapke Telegram par 10 minutes ka access link bhej diya gaya hai.');
+                    window.location.href = trialData.invite_link;
+                } else {
+                    alert('❌ ' + trialData.message);
+                }
+                return;
+            }
+
+            // Normal Paid Razorpay Flow
             const options = {
-                "key": "YOUR_RAZORPAY_KEY_ID", // Apni key yahan dalein
+                "key": "YOUR_RAZORPAY_KEY_ID",
                 "amount": data.order.amount,
                 "currency": "INR",
                 "name": "CYBER-VIP SECUREVAULT",
                 "description": data.planName,
                 "order_id": data.order.id,
                 "handler": async function (response) {
-                    // 3. Verify Payment
                     const verifyRes = await fetch('/verify-payment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -177,10 +181,10 @@
                     });
                     const verifyData = await verifyRes.json();
                     if(verifyData.success) {
-                        alert('✨ Payment Successful! Aapke Telegram par VIP invite link bhej diya gaya hai.');
+                        alert('✨ Payment Successful! Check Telegram inbox.');
                         window.location.href = verifyData.invite_link;
                     } else {
-                        alert('❌ Payment verification failed.');
+                        alert('❌ Verification failed.');
                     }
                 },
                 "theme": { "color": "#06b6d4" }
