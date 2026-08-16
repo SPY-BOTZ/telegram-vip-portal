@@ -1,76 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIP Channel Subscription Portal</title>
-    <script src="https://checkout.cashfree.com/sdk/v3/cashfree.js"></script>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #0f172a; color: #f8fafc; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        .container { width: 100%; max-width: 500px; background: #1e293b; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-        h2 { text-align: center; margin-bottom: 20px; color: #38bdf8; font-size: 22px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: #94a3b8; }
-        select, input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 15px; outline: none; }
-        select:focus, input:focus { border-color: #38bdf8; }
-        .plans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .plan-card { background: #0f172a; border: 2px solid #334155; border-radius: 10px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.3s ease; }
-        .plan-card:hover { border-color: #38bdf8; }
-        .plan-card.selected { border-color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
-        .plan-name { font-size: 14px; font-weight: bold; color: #cbd5e1; }
-        .plan-price { font-size: 18px; font-weight: bold; color: #38bdf8; margin-top: 5px; }
-        .btn { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: background 0.3s; }
-        .btn:hover { background: #1d4ed8; }
-        #loading { display: none; text-align: center; margin-top: 15px; color: #38bdf8; font-weight: bold; }
-        #result-box { display: none; margin-top: 20px; text-align: center; background: #065f46; padding: 15px; border-radius: 8px; }
-        #result-box a { color: #34d399; font-weight: bold; word-break: break-all; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h2>🚀 VIP Channel Access</h2>
-    
-    <div class="form-group">
-        <label>Your Telegram User ID</label>
-        <input type="text" id="telegramId" placeholder="Enter your Telegram ID (e.g. 123456789)" readonly>
-    </div>
-
-    <div class="form-group">
-        <label>Select VIP Channel</label>
-        <select id="channelSelect">
-            <option value="channel1">🎬 VIP Movie & Series Channel</option>
-            <option value="channel2">⚡ VIP Premium Bot & Tools Channel</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>Choose Your Plan</label>
-        <div class="plans-grid" id="plansContainer">
-            <!-- Plans will load dynamically -->
-        </div>
-    </div>
-
-    <button class="btn" id="payBtn" onclick="processCheckout()">Proceed to Pay</button>
-    
-    <div id="loading">Processing request, please wait...</div>
-    
-    <div id="result-box">
-        <p>🎉 Success! Click below to join your channel:</p>
-        <a id="inviteLink" href="#" target="_blank">Join VIP Channel</a>
-    </div>
-</div>
-
 <script>
-    // URL se Telegram User ID auto-fetch karna
     const urlParams = new URLSearchParams(window.location.search);
     const userIdFromUrl = urlParams.get('userid');
     if (userIdFromUrl) {
         document.getElementById('telegramId').value = userIdFromUrl;
-    } else {
-        document.getElementById('telegramId').removeAttribute('readonly');
-        document.getElementById('telegramId').placeholder = "Enter your Telegram ID manually";
     }
 
     const plansData = {
@@ -93,7 +25,7 @@
     };
 
     let selectedPlanKey = null;
-    const cashfree = Cashfree({ mode: "production" }); // Agar test mode ho toh "sandbox" kar sakte hain
+    const cashfree = Cashfree({ mode: "production" });
 
     function renderPlans() {
         const channelKey = document.getElementById('channelSelect').value;
@@ -101,10 +33,17 @@
         container.innerHTML = '';
         selectedPlanKey = null;
 
+        if (!plansData[channelKey]) return;
+
         plansData[channelKey].forEach((plan, index) => {
             const card = document.createElement('div');
-            card.className = `plan-card ${index === 0 ? 'selected' : ''}`;
-            if (index === 0) selectedPlanKey = plan.key;
+            // Pehla plan default select kar lo taaki error na aaye
+            if (index === 0) {
+                card.className = 'plan-card selected';
+                selectedPlanKey = plan.key;
+            } else {
+                card.className = 'plan-card';
+            }
             
             card.innerHTML = `
                 <div class="plan-name">${plan.name}</div>
@@ -120,119 +59,9 @@
     }
 
     document.getElementById('channelSelect').onchange = renderPlans;
-    renderPlans();
-
-    async function processCheckout() {
-        const telegramId = document.getElementById('telegramId').value.trim();
-        const channelKey = document.getElementById('channelSelect').value;
-
-        if (!telegramId) {
-            alert('Please enter your Telegram User ID!');
-            return;
-        }
-        if (!selectedPlanKey) {
-            alert('Please select a plan!');
-            return;
-        }
-
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('payBtn').style.display = 'none';
-
-        try {
-            const response = await fetch('/create-order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ channelKey, planKey: selectedPlanKey, telegramId })
-            });
-            const data = await response.json();
-
-            if (!data.success) {
-                alert(data.message || 'Error creating order');
-                resetUI();
-                return;
-            }
-
-            // Agar Free Trial hai
-            if (data.isTrial) {
-                const trialRes = await fetch('/activate-trial', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ telegramId, channelKey })
-                });
-                const trialData = await trialRes.json();
-                if (trialData.success) {
-                    showSuccess(trialData.invite_link);
-                } else {
-                    alert(trialData.message);
-                    resetUI();
-                }
-                return;
-            }
-
-            // Agar Paid Plan hai toh Cashfree Checkout Open hoga
-            let checkoutOptions = {
-                paymentSessionId: data.payment_session_id,
-                returnUrl: window.location.href.split('?')[0] + `?success=true&order_id=${data.order_id}&telegramId=${telegramId}&channelKey=${channelKey}&planKey=${selectedPlanKey}`
-            };
-
-            cashfree.checkout(checkoutOptions).then(function(result) {
-                if (result.error) {
-                    alert(result.error.message);
-                    resetUI();
-                }
-            });
-
-        } catch (err) {
-            alert('Something went wrong!');
-            resetUI();
-        }
-    }
-
-    function showSuccess(link) {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('result-box').style.display = 'block';
-        document.getElementById('inviteLink').href = link;
-        document.getElementById('inviteLink').innerText = link;
-    }
-
-    function resetUI() {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('payBtn').style.display = 'block';
-    }
-
-    // Payment ke baad redirect hone par verify karna
-    window.onload = async function() {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('success') === 'true') {
-            document.getElementById('loading').innerText = "Verifying Payment...";
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('payBtn').style.display = 'none';
-
-            const order_id = params.get('order_id');
-            const telegramId = params.get('telegramId');
-            const channelKey = params.get('channelKey');
-            const planKey = params.get('planKey');
-
-            try {
-                const res = await fetch('/verify-payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ order_id, telegramId, channelKey, planKey })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    showSuccess(data.invite_link);
-                } else {
-                    alert(data.message || 'Payment verification failed');
-                    window.location.href = window.location.pathname;
-                }
-            } catch (e) {
-                alert('Verification error');
-                window.location.href = window.location.pathname;
-            }
-        }
+    
+    // Page load hote hi run ho
+    window.onload = function() {
+        renderPlans();
     };
 </script>
-
-</body>
-</html>
