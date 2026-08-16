@@ -15,7 +15,7 @@ const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
 const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-// Safe polling setup to avoid 409 conflict errors
+// Safe Telegram bot polling setup
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: { interval: 2000, autoStart: true, params: { timeout: 10 } } });
 const WEB_APP_URL = process.env.WEB_APP_URL || "https://rainy-manya-bhaiforik76-fe95b73e.koyeb.app";
 
@@ -40,7 +40,6 @@ const CHANNELS_CONFIG = {
     'channel1': {
         name: 'VIP Movie & Series Channel',
         vipId: process.env.CHANNEL_1_VIP_ID || '@channel_1_vip',
-        logId: process.env.CHANNEL_1_LOG_ID || '@channel_1_logs',
         plans: {
             'trial': { name: 'Free Trial', amount: 0, ms: 10 * 60 * 1000 },
             '15days': { name: '15 Days Trial', amount: 99, ms: 15 * 24 * 60 * 60 * 1000 },
@@ -53,7 +52,6 @@ const CHANNELS_CONFIG = {
     'channel2': {
         name: 'VIP Premium Bot & Tools Channel',
         vipId: process.env.CHANNEL_2_VIP_ID || '@channel_2_vip',
-        logId: process.env.CHANNEL_2_LOG_ID || '@channel_2_logs',
         plans: {
             'trial': { name: 'Free Trial', amount: 0, ms: 10 * 60 * 1000 },
             '15days': { name: '15 Days Trial', amount: 149, ms: 15 * 24 * 60 * 60 * 1000 },
@@ -89,9 +87,9 @@ async function createTelegramInviteLink(chatId) {
     }
 }
 
-// Absolute path to fix white screen issue
+// Serve index.html safely
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, './index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.post('/create-order', async (req, res) => {
@@ -130,8 +128,6 @@ app.post('/create-order', async (req, res) => {
         });
         
         const data = await response.json();
-        console.log("Cashfree Response:", data);
-
         if (response.ok && data.payment_session_id) {
             res.json({ success: true, isTrial: false, payment_session_id: data.payment_session_id, order_id: orderId, planName: selectedPlan.name });
         } else {
