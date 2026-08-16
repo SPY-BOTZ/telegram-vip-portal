@@ -50,7 +50,7 @@
     const channelData = {
         'channel1': [
             { key: 'trial', name: 'Free Trial (10 Mins)', price: 0 },
-            { key: '15days', name: '15 Days Pass', price: 99 },
+            { key: '15days', name: '1 Days Pass', price: 99 },
             { key: '1month', name: '1 Month Pass', price: 199 },
             { key: '2months', name: '2 Months Pass', price: 369 },
             { key: '3months', name: '3 Months Gold', price: 499 },
@@ -58,7 +58,7 @@
         ],
         'channel2': [
             { key: 'trial', name: 'Free Trial (10 Mins)', price: 0 },
-            { key: '15days', name: '15 Days Pass', price: 149 },
+            { key: '1days', name: '15 Days Pass', price: 1 },
             { key: '1month', name: '1 Month Pass', price: 299 },
             { key: '2months', name: '2 Months Pass', price: 549 },
             { key: '3months', name: '3 Months Gold', price: 799 },
@@ -83,7 +83,7 @@
                 const upiLink = `upi://pay?pa=${myUpiId}&pn=VIPPortal&am=${plan.price}&cu=INR`;
                 actionHtml = `
                     <button class="pay-btn" onclick="openUpi('${upiLink}')">Pay ₹${plan.price} Now</button>
-                    <a class="support-btn" href="https://t.me/${adminUsername}" target="_blank">💬 Support (Contact Admin)</a>
+                    <a class="support-btn" href="https://t.me/botmaster55" target="_blank">💬 Support (Contact Admin)</a>
                 `;
             }
 
