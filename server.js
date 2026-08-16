@@ -7,38 +7,31 @@ const TelegramBot = require('node-telegram-bot-api');
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Serve static files correctly from root directory to prevent white screen
 app.use(express.static(__dirname));
 
 const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
 const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
+// Webhook mode ya safe polling taaki 409 conflict error na aaye
+const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: { interval: 2000, autoStart: true, params: { timeout: 10 } } });
 const WEB_APP_URL = process.env.WEB_APP_URL || "https://rainy-manya-bhaiforik76-fe95b73e.koyeb.app";
 
 bot.onText(/\/start/, (msg) => {
-    const chatId = msg.chat.id;
-    const userId = msg.from.id;
-    
-    const messageText = `🔥 *WELCOME TO VIP PORTAL*\n\nNeeche diye gaye button par click karke apna plan chunein aur instant access payen!`;
-    
-    const opts = {
-        parse_mode: 'Markdown',
-        reply_markup: {
-            inline_keyboard: [
-                [
-                    { text: "⚡ Open VIP Portal", url: `${WEB_APP_URL}/?userid=${userId}` }
-                ],
-                [
-                    { text: "📞 Support / Help", url: "https://t.me/" }
+    try {
+        const chatId = msg.chat.id;
+        const userId = msg.from.id;
+        const messageText = "🔥 WELCOME TO VIP PORTAL\n\nNeeche diye gaye button par click karke apna plan chunein aur instant access payen!";
+        
+        bot.sendMessage(chatId, messageText, {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "⚡ Open VIP Portal", url: `${WEB_APP_URL}/?userid=${userId}` }],
+                    [{ text: "📞 Support / Help", url: "https://t.me/" }]
                 ]
-            ]
-        }
-    };
-    
-    bot.sendMessage(chatId, messageText, opts);
+            }
+        });
+    } catch(e) { console.log(e); }
 });
 
 const CHANNELS_CONFIG = {
@@ -81,7 +74,7 @@ function saveSubscriptions(subs) {
 
 async function createTelegramInviteLink(chatId) {
     try {
-        const expireDate = Math.floor(Date.now() / 1000) + 172800; // 2 days expiry
+        const expireDate = Math.floor(Date.now() / 1000) + 172800;
         const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/createChatInviteLink`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -134,6 +127,7 @@ app.post('/create-order', async (req, res) => {
         });
         
         const data = await response.json();
+        console.log("Cashfree Response:", data);
 
         if (response.ok && data.payment_session_id) {
             res.json({ success: true, isTrial: false, payment_session_id: data.payment_session_id, order_id: orderId, planName: selectedPlan.name });
@@ -167,9 +161,7 @@ app.post('/activate-trial', async (req, res) => {
         });
         saveSubscriptions(subs);
 
-        bot.sendMessage(telegramId, `🎉 *FREE TRIAL ACTIVATED!*\n\nChannel: *${channelData.name}*\n\nLink:\n${inviteLink}`, { parse_mode: 'Markdown' });
-        bot.sendMessage(channelData.logId, `🚀 *NEW FREE TRIAL*\n👤 \`${telegramId}\``, { parse_mode: 'Markdown' });
-
+        bot.sendMessage(telegramId, `FREE TRIAL ACTIVATED!\n\nChannel: ${channelData.name}\n\nLink:\n${inviteLink}`);
         res.json({ success: true, invite_link: inviteLink });
     } catch (error) {
         res.status(500).json({ success: false, message: "Trial Failed" });
@@ -207,9 +199,7 @@ app.post('/verify-payment', async (req, res) => {
             });
             saveSubscriptions(subs);
 
-            bot.sendMessage(telegramId, `⚡ *PAYMENT CONFIRMED!*\n\nChannel: *${channelData.name}*\nPlan: *${selectedPlan.name}*\n\nLink:\n${inviteLink}`, { parse_mode: 'Markdown' });
-            bot.sendMessage(channelData.logId, `🔔 *NEW VIP PURCHASE*\n👤 \`${telegramId}\`\n💎 ${selectedPlan.name}\n💰 ₹${selectedPlan.amount}`, { parse_mode: 'Markdown' });
-
+            bot.sendMessage(telegramId, `PAYMENT CONFIRMED!\n\nChannel: ${channelData.name}\nPlan: ${selectedPlan.name}\n\nLink:\n${inviteLink}`);
             res.json({ success: true, invite_link: inviteLink });
         } else {
             res.status(400).json({ success: false, message: "Payment complete nahi hua hai!" });
