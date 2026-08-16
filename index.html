@@ -1,65 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIP Channel Subscription Portal</title>
-    <script src="https://checkout.cashfree.com/sdk/v3/cashfree.js"></script>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #0f172a; color: #f8fafc; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        .container { width: 100%; max-width: 500px; background: #1e293b; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-        h2 { text-align: center; margin-bottom: 20px; color: #38bdf8; font-size: 22px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: #94a3b8; }
-        select, input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 15px; outline: none; }
-        select:focus, input:focus { border-color: #38bdf8; }
-        .plans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .plan-card { background: #0f172a; border: 2px solid #334155; border-radius: 10px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.3s ease; }
-        .plan-card:hover { border-color: #38bdf8; }
-        .plan-card.selected { border-color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
-        .plan-name { font-size: 14px; font-weight: bold; color: #cbd5e1; }
-        .plan-price { font-size: 18px; font-weight: bold; color: #38bdf8; margin-top: 5px; }
-        .btn { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: background 0.3s; }
-        .btn:hover { background: #1d4ed8; }
-        #loading { display: none; text-align: center; margin-top: 15px; color: #38bdf8; font-weight: bold; }
-        #result-box { display: none; margin-top: 20px; text-align: center; background: #065f46; padding: 15px; border-radius: 8px; }
-        #result-box a { color: #34d399; font-weight: bold; word-break: break-all; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h2>🚀 VIP Channel Access</h2>
-    
-    <div class="form-group">
-        <label>Your Telegram User ID</label>
-        <input type="text" id="telegramId" placeholder="Enter your Telegram ID" readonly>
-    </div>
-
-    <div class="form-group">
-        <label>Select VIP Channel</label>
-        <select id="channelSelect" onchange="renderPlans()">
-            <option value="channel1">🎬 VIP Movie & Series Channel</option>
-            <option value="channel2">⚡ VIP Premium Bot & Tools Channel</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>Choose Your Plan</label>
-        <div class="plans-grid" id="plansContainer"></div>
-    </div>
-
-    <button class="btn" id="payBtn" onclick="processCheckout()">Proceed to Pay</button>
-    
-    <div id="loading">Processing request, please wait...</div>
-    
-    <div id="result-box">
-        <p>🎉 Success! Click below to join your channel:</p>
-        <a id="inviteLink" href="#" target="_blank">Join VIP Channel</a>
-    </div>
-</div>
-
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const userIdFromUrl = urlParams.get('userid');
@@ -121,9 +59,39 @@
         });
     }
 
-    // Page load hote hi run ho
-    window.onload = function() {
+    window.onload = async function() {
         renderPlans();
+
+        // Agar user payment karke wapas redirect hoke aaya hai
+        const successParam = urlParams.get('success');
+        const orderIdParam = urlParams.get('order_id');
+        const tId = urlParams.get('telegramId');
+        const cKey = urlParams.get('channelKey');
+        const pKey = urlParams.get('planKey');
+
+        if (successParam === 'true' && orderIdParam) {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('payBtn').style.display = 'none';
+
+            try {
+                const response = await fetch('/verify-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: orderIdParam, telegramId: tId, channelKey: cKey, planKey: pKey })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showSuccess(data.invite_link);
+                } else {
+                    alert(data.message || 'Payment verification failed!');
+                    resetUI();
+                }
+            } catch (err) {
+                alert('Something went wrong during verification!');
+                resetUI();
+            }
+        }
     };
 
     async function processCheckout() {
@@ -202,5 +170,3 @@
         document.getElementById('payBtn').style.display = 'block';
     }
 </script>
-</body>
-</html>
