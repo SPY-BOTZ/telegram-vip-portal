@@ -7,13 +7,15 @@ const TelegramBot = require('node-telegram-bot-api');
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from root directory
 app.use(express.static(__dirname));
 
 const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
 const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-// Webhook mode ya safe polling taaki 409 conflict error na aaye
+// Safe polling setup to avoid 409 conflict errors
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: { interval: 2000, autoStart: true, params: { timeout: 10 } } });
 const WEB_APP_URL = process.env.WEB_APP_URL || "https://rainy-manya-bhaiforik76-fe95b73e.koyeb.app";
 
@@ -87,8 +89,9 @@ async function createTelegramInviteLink(chatId) {
     }
 }
 
+// Absolute path to fix white screen issue
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, './index.html'));
 });
 
 app.post('/create-order', async (req, res) => {
