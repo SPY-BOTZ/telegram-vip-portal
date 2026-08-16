@@ -63,7 +63,7 @@ bot.onText(/\/start/, (msg, match) => {
 const CHANNELS_CONFIG = {
     'channel1': {
         name: 'VIP Movie & Series Channel',
-        vipId: process.env.CHANNEL_1_VIP_ID || '@channel_1_vip',
+        vipId: process.env.CHANNEL_1_VIP_ID || '-1002547208138',
         plans: {
             'trial': { name: 'Free Trial (10 Mins)', amount: 0, ms: 10 * 60 * 1000 },
             '15days': { name: '15 Days Pass', amount: 1, ms: 15 * 24 * 60 * 60 * 1000 },
