@@ -12,6 +12,7 @@ const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const VIP_CHANNEL_ID = process.env.VIP_CHANNEL_ID;
+const ADMIN_LOG_CHANNEL_ID = process.env.ADMIN_LOG_CHANNEL_ID || '@your_admin_log_channel'; // Jahan payment proof/log jayega
 
 const razorpay = new Razorpay({
     key_id: RAZORPAY_KEY_ID,
@@ -20,41 +21,44 @@ const razorpay = new Razorpay({
 
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: false });
 
-// Plan prices per month (Aap apne hisab se price change kar sakte hain)
-const MONTHLY_PRICE = 199; // ₹199 per month
+// Plan pricing definitions (15 Days to 4 Months)
+const PLANS = {
+    '15days': { name: '15 Days Trial', amount: 99, duration: '15 Days' },
+    '1month': { name: '1 Month Pass', amount: 199, duration: '1 Month' },
+    '2months': { name: '2 Months Pass', amount: 369, duration: '2 Months' },
+    '3months': { name: '3 Months Gold VIP', amount: 499, duration: '3 Months' },
+    '4months': { name: '4 Months Diamond Pass', amount: 649, duration: '4 Months' }
+};
 
-// 1. Create Razorpay Order API with Multi-Month Support
+// 1. Create Order API
 app.post('/create-order', async (req, res) => {
     try {
-        const { months } = req.body;
-        const validMonths = parseInt(months) || 1;
-        
-        // Total amount calculation (e.g., 3 months = 199 * 3 = 597)
-        let totalAmount = MONTHLY_PRICE * validMonths;
-        
-        // Optional: Discount for longer plans (jaise 5 months par thodi chhoot)
-        if(validMonths === 5) {
-            totalAmount = 899; // Special bundle price for 5 months
+        const { planKey } = req.body;
+        const selectedPlan = PLANS[planKey];
+
+        if(!selectedPlan) {
+            return res.status(400).json({ success: false, message: "Invalid Plan" });
         }
 
         const options = {
-            amount: totalAmount * 100, // Amount in paise
+            amount: selectedPlan.amount * 100, // in paise
             currency: "INR",
-            receipt: `receipt_${validMonths}m_${Date.now()}`
+            receipt: `rcpt_${planKey}_${Date.now()}`
         };
 
         const order = await razorpay.orders.create(options);
-        res.json({ success: true, order, totalAmount, months: validMonths });
+        res.json({ success: true, order, plan: selectedPlan });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: "Server Error" });
     }
 });
 
-// 2. Verify Payment & Send Telegram Invite Link API
+// 2. Verify Payment & Send Log to Admin Channel + Link to User
 app.post('/verify-payment', async (req, res) => {
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, telegramId, months } = req.body;
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, telegramId, planKey } = req.body;
+        const selectedPlan = PLANS[planKey];
 
         const body = razorpay_order_id + "|" + razorpay_payment_id;
         const expectedSignature = crypto
@@ -63,19 +67,25 @@ app.post('/verify-payment', async (req, res) => {
             .digest('hex');
 
         if (expectedSignature === razorpay_signature) {
-            // Generate single-use invite link for the private channel
+            // Generate single-use invite link for VIP channel
             const inviteLink = await bot.createChatInviteLink(VIP_CHANNEL_ID, {
                 member_limit: 1,
-                expire_date: Math.floor(Date.now() / 1000) + 86400 // Link expires in 24 hours
+                expire_date: Math.floor(Date.now() / 1000) + 86400
             });
 
+            // 1. Send invite link to the User
             if(telegramId) {
-                await bot.sendMessage(telegramId, `🎉 *Payment Successful!*\n\nPlan: *${months} Month(s) VIP Pass*\n\nHere is your exclusive private channel link:\n${inviteLink.invite_link}\n\n_Note: This invite link can only be used once._`, { parse_mode: 'Markdown' });
+                await bot.sendMessage(telegramId, `⚡ *PAYMENT CONFIRMED!*\n\nPlan: *${selectedPlan.name}*\n\nHere is your secure access link:\n${inviteLink.invite_link}\n\n_Note: Valid for single use only._`, { parse_mode: 'Markdown' });
             }
+
+            // 2. Send Payment Proof & User Detail to Admin Log Channel
+            const logMessage = `🔔 *NEW VIP SUBSCRIPTION PURCHASE!*\n\n👤 *User ID:* \`${telegramId}\`\n💎 *Plan:* ${selectedPlan.name}\n💰 *Amount Paid:* ₹${selectedPlan.amount}\n🧾 *Payment ID:* \`${razorpay_payment_id}\`\n🆔 *Order ID:* \`${razorpay_order_id}\`\n\n✅ _Access link generated and dispatched successfully._`;
+            
+            await bot.sendMessage(ADMIN_LOG_CHANNEL_ID, logMessage, { parse_mode: 'Markdown' });
 
             res.json({ success: true, invite_link: inviteLink.invite_link });
         } else {
-            res.status(400).json({ success: false, message: "Invalid Payment Signature" });
+            res.status(400).json({ success: false, message: "Invalid Signature" });
         }
     } catch (error) {
         console.error(error);
@@ -83,6 +93,5 @@ app.post('/verify-payment', async (req, res) => {
     }
 });
 
-// Dynamic Port setup for Koyeb / Render / Local
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
