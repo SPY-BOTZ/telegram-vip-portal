@@ -1,7 +1,7 @@
 {
   "name": "telegram-payment-bot",
   "version": "1.0.0",
-  "description": "VIP Telegram Subscription Portal with Razorpay",
+  "description": "VIP Telegram Subscription Portal with Multi-Month Plans",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
