@@ -47,11 +47,11 @@ const CHANNELS_CONFIG = {
         vipId: process.env.CHANNEL_1_VIP_ID || '@channel_1_vip',
         logId: process.env.CHANNEL_1_LOG_ID || '@channel_1_logs',
         plans: {
-            'trial': { name: '10 Mins Free Trial', amount: 0, ms: 10 * 60 * 1000 },
+            'trial': { name: 'Free Trial', amount: 0, ms: 10 * 60 * 1000 },
             '15days': { name: '15 Days Trial', amount: 99, ms: 15 * 24 * 60 * 60 * 1000 },
             '1month': { name: '1 Month Pass', amount: 199, ms: 30 * 24 * 60 * 60 * 1000 },
             '2months': { name: '2 Months Pass', amount: 369, ms: 60 * 24 * 60 * 60 * 1000 },
-            '3months': { name: '3 Months Gold VIP', amount: 499, ms: 90 * 24 * 60 * 60 * 1000 },
+            '3months': { name: '3 Months Gold', amount: 499, ms: 90 * 24 * 60 * 60 * 1000 },
             '4months': { name: '4 Months Diamond', amount: 649, ms: 120 * 24 * 60 * 60 * 1000 }
         }
     },
@@ -60,11 +60,11 @@ const CHANNELS_CONFIG = {
         vipId: process.env.CHANNEL_2_VIP_ID || '@channel_2_vip',
         logId: process.env.CHANNEL_2_LOG_ID || '@channel_2_logs',
         plans: {
-            'trial': { name: '10 Mins Free Trial', amount: 0, ms: 10 * 60 * 1000 },
+            'trial': { name: 'Free Trial', amount: 0, ms: 10 * 60 * 1000 },
             '15days': { name: '15 Days Trial', amount: 149, ms: 15 * 24 * 60 * 60 * 1000 },
             '1month': { name: '1 Month Pass', amount: 299, ms: 30 * 24 * 60 * 60 * 1000 },
             '2months': { name: '2 Months Pass', amount: 549, ms: 60 * 24 * 60 * 60 * 1000 },
-            '3months': { name: '3 Months Gold VIP', amount: 799, ms: 90 * 24 * 60 * 60 * 1000 },
+            '3months': { name: '3 Months Gold', amount: 799, ms: 90 * 24 * 60 * 60 * 1000 },
             '4months': { name: '4 Months Diamond', amount: 999, ms: 120 * 24 * 60 * 60 * 1000 }
         }
     }
@@ -115,7 +115,11 @@ app.post('/create-order', async (req, res) => {
             order_id: orderId,
             order_amount: selectedPlan.amount,
             order_currency: "INR",
-            customer_details: { customer_id: String(telegramId), customer_phone: "9999999999" }
+            customer_details: { 
+                customer_id: String(telegramId), 
+                customer_phone: "9999999999",
+                customer_email: "user@gmail.com"
+            }
         };
 
         const response = await fetch("https://api.cashfree.com/pg/orders", {
@@ -128,13 +132,17 @@ app.post('/create-order', async (req, res) => {
             },
             body: JSON.stringify(payload)
         });
+        
         const data = await response.json();
+        console.log("Cashfree Response:", data);
+
         if (response.ok && data.payment_session_id) {
             res.json({ success: true, isTrial: false, payment_session_id: data.payment_session_id, order_id: orderId, planName: selectedPlan.name });
         } else {
             res.status(500).json({ success: false, message: data.message || "Payment Gateway Error" });
         }
     } catch (error) {
+        console.error("Order Creation Error:", error);
         res.status(500).json({ success: false, message: "Server Error" });
     }
 });
@@ -155,7 +163,7 @@ app.post('/activate-trial', async (req, res) => {
             telegramId: String(telegramId),
             channelKey: channelKey,
             vipId: channelData.vipId,
-            planName: '10 Mins Free Trial',
+            planName: 'Free Trial',
             expiryTime: Date.now() + 10 * 60 * 1000,
             isTrial: true
         });
