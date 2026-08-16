@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const TelegramBot = require('node-telegram-bot-api');
 
 const app = express();
 app.use(express.json());
@@ -11,6 +12,35 @@ app.use(express.static(path.join(__dirname, 'public')));
 const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
 const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+
+// Initialize Telegram Bot (Polling mode)
+const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
+
+// Apni Koyeb wali website ka link yahan daalein (bin trailing slash ke)
+const WEB_APP_URL = process.env.WEB_APP_URL || "https://rainy-manya-bhaiforik76-fe95b73e.koyeb.app";
+
+bot.onText(/\/start/, (msg) => {
+    const chatId = msg.chat.id;
+    const userId = msg.from.id;
+    
+    const messageText = `🔥 *WELCOME TO VIP PORTAL*\n\nNeeche diye gaye button par click karke apna plan chunein aur instant access payen!`;
+    
+    const opts = {
+        parse_mode: 'Markdown',
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    { text: "⚡ Open VIP Portal", url: `${WEB_APP_URL}/?userid=${userId}` }
+                ],
+                [
+                    { text: "📞 Support / Help", url: "https://t.me/" }
+                ]
+            ]
+        }
+    };
+    
+    bot.sendMessage(chatId, messageText, opts);
+});
 
 const CHANNELS_CONFIG = {
     'channel1': {
@@ -50,18 +80,6 @@ function saveSubscriptions(subs) {
     fs.writeFileSync(DB_FILE, JSON.stringify(subs, null, 2));
 }
 
-async function sendTelegramMessage(chatId, text) {
-    try {
-        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'Markdown' })
-        });
-    } catch (err) {
-        console.error("Telegram Error:", err.message);
-    }
-}
-
 async function createTelegramInviteLink(chatId) {
     try {
         const expireDate = Math.floor(Date.now() / 1000) + 86400;
@@ -73,7 +91,6 @@ async function createTelegramInviteLink(chatId) {
         const data = await res.json();
         return data.ok ? data.result.invite_link : null;
     } catch (err) {
-        console.error("Invite Link Error:", err.message);
         return null;
     }
 }
@@ -141,13 +158,12 @@ app.post('/activate-trial', async (req, res) => {
             vipId: channelData.vipId,
             planName: '10 Mins Free Trial',
             expiryTime: Date.now() + 10 * 60 * 1000,
-            isTrial: true,
-            remindersSent: 4
+            isTrial: true
         });
         saveSubscriptions(subs);
 
-        await sendTelegramMessage(telegramId, `🎉 *10-MINUTES FREE TRIAL ACTIVATED!*\n\nChannel: *${channelData.name}*\n\nAccess Link:\n${inviteLink}`);
-        await sendTelegramMessage(channelData.logId, `🚀 *NEW FREE TRIAL USER*\n👤 *User ID:* \`${telegramId}\``);
+        bot.sendMessage(telegramId, `🎉 *FREE TRIAL ACTIVATED!*\n\nChannel: *${channelData.name}*\n\nLink:\n${inviteLink}`, { parse_mode: 'Markdown' });
+        bot.sendMessage(channelData.logId, `🚀 *NEW FREE TRIAL*\n👤 \`${telegramId}\``, { parse_mode: 'Markdown' });
 
         res.json({ success: true, invite_link: inviteLink });
     } catch (error) {
@@ -182,13 +198,12 @@ app.post('/verify-payment', async (req, res) => {
                 vipId: channelData.vipId,
                 planName: selectedPlan.name,
                 expiryTime: Date.now() + selectedPlan.ms,
-                isTrial: false,
-                remindersSent: 0
+                isTrial: false
             });
             saveSubscriptions(subs);
 
-            await sendTelegramMessage(telegramId, `⚡ *PAYMENT CONFIRMED!*\n\nChannel: *${channelData.name}*\nPlan: *${selectedPlan.name}*\n\nSecure Link:\n${inviteLink}`);
-            await sendTelegramMessage(channelData.logId, `🔔 *NEW VIP PURCHASE*\n👤 *User ID:* \`${telegramId}\`\n💎 *Plan:* ${selectedPlan.name}\n💰 *Amount:* ₹${selectedPlan.amount}`);
+            bot.sendMessage(telegramId, `⚡ *PAYMENT CONFIRMED!*\n\nChannel: *${channelData.name}*\nPlan: *${selectedPlan.name}*\n\nLink:\n${inviteLink}`, { parse_mode: 'Markdown' });
+            bot.sendMessage(channelData.logId, `🔔 *NEW VIP PURCHASE*\n👤 \`${telegramId}\`\n💎 ${selectedPlan.name}\n💰 ₹${selectedPlan.amount}`, { parse_mode: 'Markdown' });
 
             res.json({ success: true, invite_link: inviteLink });
         } else {
@@ -199,5 +214,5 @@ app.post('/verify-payment', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.init_port || process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server and Bot running on port ${PORT}`));
