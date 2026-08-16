@@ -7,16 +7,15 @@ const TelegramBot = require('node-telegram-bot-api');
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve static files directly from root directory
+app.use(express.static(__dirname));
 
 const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
 const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-// Initialize Telegram Bot (Polling mode)
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
-
-// Apni Koyeb wali website ka link yahan daalein (bin trailing slash ke)
 const WEB_APP_URL = process.env.WEB_APP_URL || "https://rainy-manya-bhaiforik76-fe95b73e.koyeb.app";
 
 bot.onText(/\/start/, (msg) => {
@@ -96,7 +95,7 @@ async function createTelegramInviteLink(chatId) {
 }
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.post('/create-order', async (req, res) => {
@@ -214,5 +213,5 @@ app.post('/verify-payment', async (req, res) => {
     }
 });
 
-const PORT = process.init_port || process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server and Bot running on port ${PORT}`));
