@@ -13,8 +13,11 @@
         select, input[type="text"], input[type="file"] { background: #334155; color: #fff; }
         button { background: #0284c7; color: #fff; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 20px; }
         button:hover { background: #0369a1; }
+        .upi-btns { display: flex; gap: 10px; margin-top: 10px; }
+        .upi-btns a { flex: 1; padding: 10px; text-align: center; background: #334155; color: #38bdf8; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; }
+        .upi-btns a:hover { background: #475569; }
         .qr-box { background: #334155; padding: 15px; border-radius: 8px; text-align: center; margin-top: 15px; display: none; }
-        .qr-box img { max-width: 150px; border-radius: 6px; }
+        .qr-box img { max-width: 140px; border-radius: 6px; }
         .result-box { margin-top: 20px; padding: 15px; background: #334155; border-radius: 8px; text-align: center; display: none; word-break: break-all; }
         .result-box a { color: #38bdf8; font-weight: bold; text-decoration: underline; }
     </style>
@@ -40,19 +43,27 @@
         <option value="4months">4 Months Diamond (₹649)</option>
     </select>
 
-    <!-- Manual Payment Section -->
+    <!-- Manual Payment Section with Direct UPI apps -->
     <div id="manualSection" class="qr-box">
-        <p style="margin: 0 0 10px 0; font-size: 14px; color: #38bdf8;">Scan QR or Pay via UPI ID:<br><b>yourupi@ybl</b></p>
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yourupi@ybl&pn=VIPPortal" alt="UPI QR">
+        <p style="margin: 0 0 10px 0; font-size: 13px; color: #38bdf8;">Payment karne ke liye kisi bhi app par click karein:</p>
         
-        <label style="text-align: left;" for="utrInput">Enter UTR / Transaction ID:</label>
+        <div class="upi-btns">
+            <a id="gpayBtn" href="#" target="_blank">Google Pay</a>
+            <a id="phonepeBtn" href="#" target="_blank">PhonePe</a>
+            <a id="paytmBtn" href="#" target="_blank">Paytm</a>
+        </div>
+
+        <p style="margin: 15px 0 5px 0; font-size: 13px; color: #94a3b8;">Ya QR Code scan karein:</p>
+        <img id="qrImg" src="" alt="UPI QR">
+        
+        <label style="text-align: left;" for="utrInput">Enter UTR / Transaction ID (Payment ke baad):</label>
         <input type="text" id="utrInput" placeholder="e.g. 435214xxxxxx">
 
         <label style="text-align: left;" for="screenshotInput">Upload Payment Screenshot:</label>
         <input type="file" id="screenshotInput" accept="image/*">
     </div>
 
-    <button id="actionBtn" onclick="handleSubmit()">Proceed / Activate Trial</button>
+    <button id="actionBtn" onclick="handleSubmit()">Activate Free Trial</button>
 
     <div id="resultBox" class="result-box">
         <p id="resultText"></p>
@@ -62,6 +73,7 @@
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const telegramId = urlParams.get('userid');
+    const myUpiId = "yourupi@ybl"; // Yahan apni UPI ID daalein (Jaise merchant@paytm ya number@ybl)
 
     function checkPlanType() {
         const planKey = document.getElementById('planSelect').value;
@@ -73,7 +85,18 @@
             btn.innerText = 'Activate Free Trial';
         } else {
             manualSection.style.display = 'block';
-            btn.innerText = 'Submit Payment Details';
+            btn.innerText = 'Submit Payment Proof';
+
+            // Prices mapping
+            const prices = { '15days': 99, '1-month': 199, '1month': 199, '2months': 369, '3months': 499, '4months': 649 };
+            const amount = prices[planKey] || 99;
+
+            const upiLink = `upi://pay?pa=${myUpiId}&pn=VIPPortal&am=${amount}&cu=INR`;
+            
+            document.getElementById('gpayBtn').href = upiLink;
+            document.getElementById('phonepeBtn').href = upiLink;
+            document.getElementById('paytmBtn').href = upiLink;
+            document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(upiLink)}`;
         }
     }
 
@@ -99,7 +122,7 @@
             const screenshotFile = document.getElementById('screenshotInput').files[0];
 
             if (!utr) {
-                alert("Kripya UTR / Transaction ID enter karein!");
+                alert("Kripya payment karne ke baad UTR / Transaction ID enter karein!");
                 return;
             }
 
@@ -117,7 +140,10 @@
                 body: formData
             });
             const data = await res.json();
-            showResult(data);
+            
+            // Auto redirect to bot chat after submission
+            alert("Payment details bhej di gayi hain! Ab aapko bot par redirect kiya ja raha hai.");
+            window.location.href = `https://t.me/Payments_Robot_bot?start=payment_done`;
         }
     }
 
@@ -140,4 +166,3 @@
 
 </body>
 </html>
-
