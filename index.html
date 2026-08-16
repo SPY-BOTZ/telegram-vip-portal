@@ -28,7 +28,7 @@
             <h1 class="text-2xl md:text-3xl font-black tracking-tight bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 bg-clip-text text-transparent">
                 VIP Membership Portal
             </h1>
-            <p class="text-xs text-slate-400 mt-1">Free trial available! Test before you buy.</p>
+            <p class="text-xs text-slate-400 mt-1">Choose channel, duration and get instant access.</p>
         </div>
 
         <div class="space-y-4 relative z-10">
@@ -48,10 +48,9 @@
             <div>
                 <label class="block text-[11px] font-bold uppercase tracking-wider text-cyan-400 mb-2">Select Duration Plan</label>
                 
-                <!-- Free Trial Special Button (Full Width Top) -->
                 <button onclick="selectPlan('trial', this)" data-plan="trial" class="plan-btn w-full mb-2.5 p-3 rounded-xl border border-emerald-500/80 bg-slate-900/80 hover:border-emerald-400 text-left transition flex justify-between items-center group ring-1 ring-emerald-500/30">
                     <div>
-                        <span class="text-[9px] font-extrabold uppercase text-emerald-400 block">✨ Try Before You Buy</span>
+                        <span class="text-[9px] font-extrabold uppercase text-emerald-400 block">✨ Special Offer</span>
                         <span class="text-sm font-bold text-white group-hover:text-emerald-300">10 Mins Free Trial</span>
                     </div>
                     <span class="text-emerald-400 font-extrabold text-base">FREE</span>
@@ -100,6 +99,18 @@
     <script>
         let selectedPlanKey = '3months';
 
+        // Automatically fetch User ID from URL query parameters (e.g., website.com/?userid=123456)
+        document.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const userIdFromUrl = urlParams.get('userid') || urlParams.get('id');
+            if(userIdFromUrl) {
+                document.getElementById('telegramId').value = userIdFromUrl;
+            }
+
+            const defaultBtn = document.querySelector("[onclick*='3months']");
+            if(defaultBtn) defaultBtn.classList.add('ring-2', 'ring-cyan-400', 'border-cyan-400', 'bg-slate-800');
+        });
+
         function selectPlan(key, btnElement) {
             selectedPlanKey = key;
             document.querySelectorAll('.plan-btn').forEach(b => {
@@ -115,17 +126,12 @@
             }
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const defaultBtn = document.querySelector("[onclick*='3months']");
-            if(defaultBtn) defaultBtn.classList.add('ring-2', 'ring-cyan-400', 'border-cyan-400', 'bg-slate-800');
-        });
-
         async function handleAction() {
             const channelKey = document.getElementById('channelSelect').value;
             const telegramId = document.getElementById('telegramId').value.trim();
 
             if(!telegramId) {
-                alert('⚠️ Pehle apna Telegram Numeric User ID daalein!');
+                alert('⚠️ Telegram User ID nahi mili! Kripya bot ke through link open karein.');
                 return;
             }
 
@@ -141,7 +147,6 @@
                 return;
             }
 
-            // Agar Free Trial select kiya hai toh direct activate karo bina Razorpay ke
             if(data.isTrial) {
                 const trialRes = await fetch('/activate-trial', {
                     method: 'POST',
@@ -150,7 +155,7 @@
                 });
                 const trialData = await trialRes.json();
                 if(trialData.success) {
-                    alert('🎉 Free Trial Activated! Aapke Telegram par 10 minutes ka access link bhej diya gaya hai.');
+                    alert('🎉 10-Mins Free Trial Activated! Aapke Telegram par access link bhej diya gaya hai.');
                     window.location.href = trialData.invite_link;
                 } else {
                     alert('❌ ' + trialData.message);
@@ -158,7 +163,6 @@
                 return;
             }
 
-            // Normal Paid Razorpay Flow
             const options = {
                 "key": "YOUR_RAZORPAY_KEY_ID",
                 "amount": data.order.amount,
