@@ -1,172 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIP Portal - Subscription</title>
+    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { background: #1e293b; padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        h2 { text-align: center; color: #38bdf8; margin-bottom: 20px; }
+        label { display: block; margin-top: 15px; font-weight: 600; font-size: 14px; }
+        select, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: none; font-size: 16px; outline: none; }
+        select { background: #334155; color: #fff; }
+        button { background: #0284c7; color: #white; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 20px; }
+        button:hover { background: #0369a1; }
+        .result-box { margin-top: 20px; padding: 15px; background: #334155; border-radius: 8px; text-align: center; display: none; word-break: break-all; }
+        .result-box a { color: #38bdf8; font-weight: bold; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🔥 VIP Portal</h2>
+    
+    <label for="channelSelect">Select Channel:</label>
+    <select id="channelSelect">
+        <option value="channel1">VIP Movie & Series Channel</option>
+        <option value="channel2">VIP Premium Bot & Tools Channel</option>
+    </select>
+
+    <label for="planSelect">Select Plan:</label>
+    <select id="planSelect">
+        <option value="trial">Free Trial (10 Mins)</option>
+        <option value="15days">15 Days Pass</option>
+        <option value="1month">1 Month Pass</option>
+        <option value="2months">2 Months Pass</option>
+        <option value="3months">3 Months Gold</option>
+        <option value="4months">4 Months Diamond</option>
+    </select>
+
+    <button onclick="handlePayment()">Proceed / Pay Now</button>
+
+    <div id="resultBox" class="result-box">
+        <p id="resultText"></p>
+    </div>
+</div>
+
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const userIdFromUrl = urlParams.get('userid');
-    if (userIdFromUrl) {
-        document.getElementById('telegramId').value = userIdFromUrl;
-    } else {
-        document.getElementById('telegramId').removeAttribute('readonly');
-    }
+    const telegramId = urlParams.get('userid');
 
-    const plansData = {
-        'channel1': [
-            { key: 'trial', name: 'Free Trial', price: '₹0' },
-            { key: '15days', name: '15 Days Trial', price: '₹99' },
-            { key: '1month', name: '1 Month Pass', price: '₹199' },
-            { key: '2months', name: '2 Months Pass', price: '₹369' },
-            { key: '3months', name: '3 Months Gold', price: '₹499' },
-            { key: '4months', name: '4 Months Diamond', price: '₹649' }
-        ],
-        'channel2': [
-            { key: 'trial', name: 'Free Trial', price: '₹0' },
-            { key: '15days', name: '15 Days Trial', price: '₹149' },
-            { key: '1month', name: '1 Month Pass', price: '₹299' },
-            { key: '2months', name: '2 Months Pass', price: '₹549' },
-            { key: '3months', name: '3 Months Gold', price: '₹799' },
-            { key: '4months', name: '4 Months Diamond', price: '₹999' }
-        ]
-    };
-
-    let selectedPlanKey = null;
-    const cashfree = Cashfree({ mode: "production" });
-
-    function renderPlans() {
-        const channelKey = document.getElementById('channelSelect').value;
-        const container = document.getElementById('plansContainer');
-        container.innerHTML = '';
-        selectedPlanKey = null;
-
-        if (!plansData[channelKey]) return;
-
-        plansData[channelKey].forEach((plan, index) => {
-            const card = document.createElement('div');
-            if (index === 0) {
-                card.className = 'plan-card selected';
-                selectedPlanKey = plan.key;
-            } else {
-                card.className = 'plan-card';
-            }
-            
-            card.innerHTML = `
-                <div class="plan-name">${plan.name}</div>
-                <div class="plan-price">${plan.price}</div>
-            `;
-            card.onclick = () => {
-                document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
-                card.classList.add('selected');
-                selectedPlanKey = plan.key;
-            };
-            container.appendChild(card);
-        });
-    }
-
-    window.onload = async function() {
-        renderPlans();
-
-        // Agar user payment karke wapas redirect hoke aaya hai
-        const successParam = urlParams.get('success');
-        const orderIdParam = urlParams.get('order_id');
-        const tId = urlParams.get('telegramId');
-        const cKey = urlParams.get('channelKey');
-        const pKey = urlParams.get('planKey');
-
-        if (successParam === 'true' && orderIdParam) {
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('payBtn').style.display = 'none';
-
-            try {
-                const response = await fetch('/verify-payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ order_id: orderIdParam, telegramId: tId, channelKey: cKey, planKey: pKey })
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    showSuccess(data.invite_link);
-                } else {
-                    alert(data.message || 'Payment verification failed!');
-                    resetUI();
-                }
-            } catch (err) {
-                alert('Something went wrong during verification!');
-                resetUI();
-            }
-        }
-    };
-
-    async function processCheckout() {
-        const telegramId = document.getElementById('telegramId').value.trim();
-        const channelKey = document.getElementById('channelSelect').value;
-
+    async function handlePayment() {
         if (!telegramId) {
-            alert('Please enter your Telegram User ID!');
-            return;
-        }
-        if (!selectedPlanKey) {
-            alert('Please select a plan!');
+            alert("Telegram User ID nahi mili! Kripya bot se dobara link open karein.");
             return;
         }
 
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('payBtn').style.display = 'none';
+        const channelKey = document.getElementById('channelSelect').value;
+        const planKey = document.getElementById('planSelect').value;
 
-        try {
-            const response = await fetch('/create-order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ channelKey, planKey: selectedPlanKey, telegramId })
-            });
-            const data = await response.json();
+        const res = await fetch('/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channelKey, planKey, telegramId })
+        });
+        const data = await res.json();
 
-            if (!data.success) {
-                alert(data.message || 'Error creating order');
-                resetUI();
-                return;
-            }
+        if (!data.success) {
+            alert(data.message || "Error creating order");
+            return;
+        }
 
-            if (data.isTrial) {
-                const trialRes = await fetch('/activate-trial', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ telegramId, channelKey })
-                });
-                const trialData = await trialRes.json();
-                if (trialData.success) {
-                    showSuccess(trialData.invite_link);
-                } else {
-                    alert(trialData.message);
-                    resetUI();
-                }
-                return;
-            }
-
+        if (data.isTrial) {
+            activateTrial(channelKey);
+        } else {
+            const cashfree = Cashfree({ mode: "production" }); // ya "sandbox" agar testing ho
             let checkoutOptions = {
                 paymentSessionId: data.payment_session_id,
-                returnUrl: window.location.href.split('?')[0] + `?success=true&order_id=${data.order_id}&telegramId=${telegramId}&channelKey=${channelKey}&planKey=${selectedPlanKey}`
+                redirectTarget: "_self"
             };
-
-            cashfree.checkout(checkoutOptions).then(function(result) {
-                if (result.error) {
+            cashfree.checkout(checkoutOptions).then((result) => {
+                if(result.error) {
                     alert(result.error.message);
-                    resetUI();
+                }
+                if(result.redirect) {
+                    console.log("Redirecting...");
                 }
             });
-
-        } catch (err) {
-            alert('Something went wrong!');
-            resetUI();
         }
     }
 
-    function showSuccess(link) {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('result-box').style.display = 'block';
-        document.getElementById('inviteLink').href = link;
-        document.getElementById('inviteLink').innerText = link;
-    }
+    async function activateTrial(channelKey) {
+        const res = await fetch('/activate-trial', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ telegramId, channelKey })
+        });
+        const data = await res.json();
+        const box = document.getElementById('resultBox');
+        const text = document.getElementById('resultText');
+        box.style.display = 'block';
 
-    function resetUI() {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('payBtn').style.display = 'block';
+        if (data.success) {
+            text.innerHTML = `✅ Free Trial Activated!<br><br><a href="${data.invite_link}" target="_blank">Click Here to Join Channel</a>`;
+        } else {
+            text.innerText = data.message;
+        }
     }
 </script>
+
+</body>
+</html>
