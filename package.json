@@ -1,7 +1,7 @@
 {
   "name": "telegram-vip-portal",
   "version": "1.0.1",
-  "description": "Telegram VIP Portal",
+  "description": "Telegram VIP Channel Subscription Portal",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
