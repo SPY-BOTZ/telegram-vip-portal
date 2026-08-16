@@ -66,7 +66,7 @@ const CHANNELS_CONFIG = {
         vipId: process.env.CHANNEL_1_VIP_ID || '@channel_1_vip',
         plans: {
             'trial': { name: 'Free Trial (10 Mins)', amount: 0, ms: 10 * 60 * 1000 },
-            '15days': { name: '15 Days Pass', amount: 99, ms: 15 * 24 * 60 * 60 * 1000 },
+            '15days': { name: '15 Days Pass', amount: 1, ms: 15 * 24 * 60 * 60 * 1000 },
             '1month': { name: '1 Month Pass', amount: 199, ms: 30 * 24 * 60 * 60 * 1000 },
             '2months': { name: '2 Months Pass', amount: 369, ms: 60 * 24 * 60 * 60 * 1000 },
             '3months': { name: '3 Months Gold', amount: 499, ms: 90 * 24 * 60 * 60 * 1000 },
