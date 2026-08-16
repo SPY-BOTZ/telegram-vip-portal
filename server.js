@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files directly from root directory
+// Serve static files correctly from root directory to prevent white screen
 app.use(express.static(__dirname));
 
 const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
@@ -81,11 +81,11 @@ function saveSubscriptions(subs) {
 
 async function createTelegramInviteLink(chatId) {
     try {
-        const expireDate = Math.floor(Date.now() / 1000) + 86400;
+        const expireDate = Math.floor(Date.now() / 1000) + 172800; // 2 days expiry
         const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/createChatInviteLink`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: chatId, member_limit: 1, expire_date: expireDate })
+            body: JSON.stringify({ chat_id: chatId, member_limit: 5, expire_date: expireDate })
         });
         const data = await res.json();
         return data.ok ? data.result.invite_link : null;
@@ -118,7 +118,7 @@ app.post('/create-order', async (req, res) => {
             customer_details: { 
                 customer_id: String(telegramId), 
                 customer_phone: "9999999999",
-                customer_email: "user@gmail.com"
+                customer_email: "user@gmail.com" 
             }
         };
 
@@ -134,7 +134,6 @@ app.post('/create-order', async (req, res) => {
         });
         
         const data = await response.json();
-        console.log("Cashfree Response:", data);
 
         if (response.ok && data.payment_session_id) {
             res.json({ success: true, isTrial: false, payment_session_id: data.payment_session_id, order_id: orderId, planName: selectedPlan.name });
@@ -142,7 +141,6 @@ app.post('/create-order', async (req, res) => {
             res.status(500).json({ success: false, message: data.message || "Payment Gateway Error" });
         }
     } catch (error) {
-        console.error("Order Creation Error:", error);
         res.status(500).json({ success: false, message: "Server Error" });
     }
 });
@@ -214,7 +212,7 @@ app.post('/verify-payment', async (req, res) => {
 
             res.json({ success: true, invite_link: inviteLink });
         } else {
-            res.status(400).json({ success: false, message: "Payment not completed yet!" });
+            res.status(400).json({ success: false, message: "Payment complete nahi hua hai!" });
         }
     } catch (error) {
         res.status(500).json({ success: false, message: "Verification Failed" });
