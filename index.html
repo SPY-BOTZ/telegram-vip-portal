@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VIP Portal - Fast Payment</title>
+    <!-- TELEGRAM WEB APP SDK (Yeh sabse zaroori hai error rokne ke liye) -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .container { background: #1e293b; padding: 20px; border-radius: 12px; width: 100%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
@@ -21,7 +23,7 @@
 <body>
     <div class="container">
         <h2>👑 VIP Portal</h2>
-        <div class="subtitle">Select your plan and pay directly via GPay, PhonePe, Paytm</div>
+        <div class="subtitle" id="welcome-text">Select your plan and pay directly</div>
 
         <div class="plan-card">
             <div class="plan-info"><h4>1 Days Pass</h4><p>₹5</p></div>
@@ -41,56 +43,64 @@
         </div>
 
         <div class="support-container">
-            <a href="https://t.me/botmaster55" class="support-btn" target="_blank">📞 Contact Support</a>
+            <a href="https://t.me/botmaster55" class="support-btn" target="_blank" onclick="closeWebApp()">📞 Contact Support</a>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // ⚠️ YAHA APNI ASLI UPI ID AUR NAAM DAALEIN
-        // ==========================================
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Make it full screen
+
+        // Apni UPI details daalein
         const myUPI_ID = 'BHARATPE.9Q0Q0K0Z8Q466572@unitype'; 
         const myName = 'Sekh Sarif';
 
-        // URL se User ki Telegram ID nikalna
-        const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get('userid') || 'Unknown';
+        // Get User details securely from Telegram
+        let userId = 'Unknown';
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            userId = tg.initDataUnsafe.user.id;
+            document.getElementById('welcome-text').innerText = `Welcome ${tg.initDataUnsafe.user.first_name}, Select your plan.`;
+        }
 
-        // Plan ke mutabik kitne din ka premium dena hai
         function getDays(planName) {
             if (planName.includes('1 Days')) return 1;
             if (planName.includes('1 Month')) return 30;
             if (planName.includes('2 Months')) return 60;
             if (planName.includes('3 Months')) return 90;
-            return 30; // Default
+            return 30;
         }
 
         function payNow(planName, amount) {
-            const days = getDays(planName);
-
             if (userId === 'Unknown') {
-                alert("Error: User ID nahi mili. Kripya Telegram bot se portal open karein.");
+                tg.showAlert("Error: User details not found. Please reopen from the bot.");
                 return;
             }
 
-            // 1. Backend API ko batao ki is user ne payment click kiya hai
+            const days = getDays(planName);
+
+            // Notify bot via backend
             fetch('/api/notify-payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: userId, planName: planName, amount: amount, days: days })
             });
 
-            // 2. UPI App ko direct open karne ka link (Deep link for GPay/PhonePe/Paytm)
+            // Generate UPI Link
             const transactionNote = `Payment_for_${planName.replace(/ /g, '_')}`;
             const upiLink = `upi://pay?pa=${myUPI_ID}&pn=${myName}&am=${amount}&cu=INR&tn=${transactionNote}`;
             
-            // 3. User ka phone payment app open karega
+            // Redirect to UPI app
             window.location.href = upiLink;
 
-            // 4. Alert to remind them to send screenshot
+            // Notify user and close web app
             setTimeout(() => {
-                alert("✅ Payment complete hone ke baad, Wapas Telegram Bot par jayen aur Payment Success ka Screenshot bhejein!");
+                tg.showAlert("✅ Payment done? Please go back to the chat and upload your screenshot!");
             }, 2000);
+        }
+
+        function closeWebApp() {
+            tg.close();
         }
     </script>
 </body>
