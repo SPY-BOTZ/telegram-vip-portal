@@ -66,13 +66,13 @@ if (token) {
 
     function sendMainMenu(chatId) {
         // CLEAN URL FOR TELEGRAM WEB APP
-        const appUrl = webAppUrlBase || `https://a-bhaiforik76-fe95b73e.koyeb.app`; 
+        const appUrl = webAppUrlBase || `https://rainy-manya-bhaiforik76-fe95b73e.koyeb.app/`; 
 
         const opts = {
             reply_markup: {
                 inline_keyboard: [
                     [{ text: '⚡ Open VIP Portal (Pay Here)', web_app: { url: appUrl } }],
-                    [{ text: '📞 Support', url: 'https://t.me/YOUR_SUPPORT_USERNAME' }]
+                    [{ text: '📞 Support', url: 'https://t.me/botmaster55' }]
                 ]
             }
         };
