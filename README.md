@@ -2,7 +2,7 @@
 
 This is an advanced Telegram Subscription Bot that handles FSub (Force Subscribe), WebApp Payment Integrations (UPI Intent), Admin Approvals, and Auto-Kick upon expiration.
 
-## 🛠 Features For Admin (Aapke liye)
+## 🛠 Features For Admin
 1. **FSub**: Naye users ko pehle free channel join karna hoga, uske bina menu nahi khulega.
 2. **Web App Payment**: Bot ke andar hi ek mini website khulegi, jahan se user direct GPay/PhonePe me bhej diya jayega.
 3. **Screenshot Approval System**: Payment ke baad bot screenshot mangega, jo seedhe aapke 'Admin Log Channel' me jayega 2 buttons ke saath (`Approve` / `Reject`).
@@ -10,7 +10,7 @@ This is an advanced Telegram Subscription Bot that handles FSub (Force Subscribe
 5. **Auto-Kick**: Time pura hone par bot khud usko VIP channel se nikal (kick) dega.
 6. **Reminders**: Expiry se 24 ghante pehle user ko 5 baar auto-message jayega renew karne ke liye.
 
-## 💬 Admin Commands (Aap bot mein type kar sakte hain)
+## 💬 Admin Commands
 - `/stats` - Kitne logo ne start kiya hai aur kitne premium par hain.
 - `/broadcast <message>` - Sabhi logo ko ek saath message bhejne ke liye.
 - `/addpremium <user_id> <days>` - Kisi dost ko bina payment ke VIP dena ho (e.g. `/addpremium 12345678 30`)
