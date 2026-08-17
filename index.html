@@ -3,152 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIP Portal - QR Payment</title>
+    <title>VIP Portal - Fast Payment</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .container { background: #1e293b; padding: 20px; border-radius: 12px; width: 100%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
         h2 { text-align: center; color: #38bdf8; margin-bottom: 5px; font-size: 22px; }
         .subtitle { text-align: center; color: #94a3b8; font-size: 13px; margin-bottom: 20px; }
-        
-        label { display: block; margin-top: 10px; font-weight: 600; font-size: 13px; color: #cbd5e1; }
-        select { width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: none; font-size: 15px; background: #334155; color: #fff; outline: none; }
-
         .plan-card { background: #334155; padding: 15px; border-radius: 8px; margin-top: 12px; border: 1px solid #475569; display: flex; justify-content: space-between; align-items: center; }
         .plan-info h4 { margin: 0; font-size: 15px; color: #f8fafc; }
         .plan-info p { margin: 3px 0 0 0; font-size: 13px; color: #38bdf8; font-weight: bold; }
-        
         .pay-btn { background: #10b981; color: #fff; padding: 8px 14px; border-radius: 6px; border: none; font-weight: bold; font-size: 13px; cursor: pointer; transition: background 0.2s; text-decoration: none; }
         .pay-btn:hover { background: #059669; }
-
-        /* QR Modal Popup */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 100; }
-        .modal-content { background: #1e293b; padding: 20px; border-radius: 12px; width: 90%; max-width: 320px; text-align: center; border: 1px solid #475569; }
-        .modal-content img { width: 160px; border-radius: 6px; margin: 10px 0; background: #fff; padding: 5px; }
-        .close-modal { background: #ef4444; margin-top: 15px; width: 100%; padding: 10px; border: none; border-radius: 6px; color: #fff; font-weight: bold; cursor: pointer; }
-
-        /* Single Support Button at Bottom */
         .support-container { margin-top: 25px; text-align: center; border-top: 1px solid #334155; padding-top: 15px; }
-        .global-support-btn { display: inline-block; width: 100%; background: #0284c7; color: #fff; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; box-sizing: border-box; text-align: center; }
-        .global-support-btn:hover { background: #0369a1; }
+        .support-btn { background: #0ea5e9; color: #fff; padding: 10px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block;}
     </style>
 </head>
 <body>
+    <div class="container">
+        <h2>👑 VIP Portal</h2>
+        <div class="subtitle">Select your plan and pay directly via GPay, PhonePe, Paytm</div>
 
-<div class="container">
-    <h2>🔥 VIP Portal</h2>
-    <div class="subtitle">Plan chunein, QR code scan karke pay karein</div>
-    
-    <label for="channelSelect">Select Channel:</label>
-    <select id="channelSelect" onchange="updatePlans()">
-        <option value="channel1">VIP Movie & Series Channel</option>
-        <option value="channel2">VIP Premium Bot & Tools Channel</option>
-    </select>
+        <div class="plan-card">
+            <div class="plan-info"><h4>1 Days Pass</h4><p>₹5</p></div>
+            <button class="pay-btn" onclick="payNow('1 Days Pass', 5)">Pay Now ₹5</button>
+        </div>
+        <div class="plan-card">
+            <div class="plan-info"><h4>1 Month Pass</h4><p>₹199</p></div>
+            <button class="pay-btn" onclick="payNow('1 Month Pass', 199)">Pay Now ₹199</button>
+        </div>
+        <div class="plan-card">
+            <div class="plan-info"><h4>2 Months Pass</h4><p>₹369</p></div>
+            <button class="pay-btn" onclick="payNow('2 Months Pass', 369)">Pay Now ₹369</button>
+        </div>
+        <div class="plan-card">
+            <div class="plan-info"><h4>3 Months Gold</h4><p>₹499</p></div>
+            <button class="pay-btn" onclick="payNow('3 Months Gold', 499)">Pay Now ₹499</button>
+        </div>
 
-    <!-- Plans List -->
-    <div id="plansList"></div>
-
-    <!-- Single Support Button at Bottom -->
-    <div class="support-container">
-        <a class="global-support-btn" href="https://t.me/Botmaster55" target="_blank">💬 Support / Contact Admin (Send Screenshot)</a>
+        <div class="support-container">
+            <a href="https://t.me/YOUR_SUPPORT_USERNAME" class="support-btn" target="_blank">📞 Contact Support</a>
+        </div>
     </div>
-</div>
 
-<!-- QR Modal -->
-<div id="payModal" class="modal">
-    <div class="modal-content">
-        <h3 id="modalPlanTitle" style="color: #38bdf8; margin-top:0;">Scan QR</h3>
-        <p style="font-size: 13px; color: #94a3b8; margin: 5px 0;">Kisi bhi UPI App (GPay/PhonePe/Paytm) se scan karke pay karein:</p>
-        <img id="modalQrImg" src="" alt="UPI QR">
-        <p style="font-size: 12px; color: #cbd5e1; margin: 5px 0;">Payment ke baad Support button par click karke screenshot aur UTR bhein.</p>
-        <button class="close-modal" onclick="closeModal()">Close Window</button>
-    </div>
-</div>
+    <script>
+        // ==========================================
+        // ⚠️ YAHA APNI ASLI UPI ID AUR NAAM DAALEIN
+        // ==========================================
+        const myUPI_ID = '9000000000@ybl'; 
+        const myName = 'VIP Admin';
 
-<script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const telegramId = urlParams.get('userid');
-    const myUpiId = "BHARATPE.9Q0Q0K0Z8Q466572@unitype"; // <-- Yahan apni asli UPI ID daal dein
+        // URL se User ki Telegram ID nikalna
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userid') || 'Unknown';
 
-    const channelData = {
-        'channel1': [
-            { key: 'trial', name: 'Free Trial (10 Mins)', price: 0 },
-            { key: '1days', name: '1 Days Pass', price: 5 },
-            { key: '1month', name: '1 Month Pass', price: 199 },
-            { key: '2months', name: '2 Months Pass', price: 369 },
-            { key: '3months', name: '3 Months Gold', price: 499 },
-            { key: '4months', name: '4 Months Diamond', price: 649 }
-        ],
-        'channel2': [
-            { key: 'trial', name: 'Free Trial (10 Mins)', price: 0 },
-            { key: '15days', name: '15 Days Pass', price: 149 },
-            { key: '1month', name: '1 Month Pass', price: 299 },
-            { key: '2months', name: '2 Months Pass', price: 549 },
-            { key: '3months', name: '3 Months Gold', price: 799 },
-            { key: '4months', name: '4 Months Diamond', price: 999 }
-        ]
-    };
+        // Plan ke mutabik kitne din ka premium dena hai
+        function getDays(planName) {
+            if (planName.includes('1 Days')) return 1;
+            if (planName.includes('1 Month')) return 30;
+            if (planName.includes('2 Months')) return 60;
+            if (planName.includes('3 Months')) return 90;
+            return 30; // Default
+        }
 
-    function updatePlans() {
-        const channelKey = document.getElementById('channelSelect').value;
-        const plans = channelData[channelKey];
-        const plansListDiv = document.getElementById('plansList');
-        plansListDiv.innerHTML = '';
+        function payNow(planName, amount) {
+            const days = getDays(planName);
 
-        plans.forEach(plan => {
-            const card = document.createElement('div');
-            card.className = 'plan-card';
-            
-            let actionHtml = '';
-            if (plan.price === 0) {
-                actionHtml = `<button class="pay-btn" style="background:#0284c7;" onclick="selectTrial('${plan.key}')">Activate</button>`;
-            } else {
-                actionHtml = `<button class="pay-btn" onclick="openQrModal('${plan.name}', ${plan.price})">View QR ₹${plan.price}</button>`;
+            if (userId === 'Unknown') {
+                alert("Error: User ID nahi mili. Kripya Telegram bot se portal open karein.");
+                return;
             }
 
-            card.innerHTML = `
-                <div class="plan-info">
-                    <h4>${plan.name}</h4>
-                    <p>${plan.price === 0 ? 'FREE' : '₹' + plan.price}</p>
-                </div>
-                ${actionHtml}
-            `;
-            plansListDiv.appendChild(card);
-        });
-    }
+            // 1. Backend API ko batao ki is user ne payment click kiya hai
+            fetch('/api/notify-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: userId, planName: planName, amount: amount, days: days })
+            });
 
-    function openQrModal(planName, price) {
-        const upiLink = `upi://pay?pa=${myUpiId}&pn=VIPPortal&am=${price}&cu=INR`;
-        document.getElementById('modalPlanTitle').innerText = `${planName} - ₹${price}`;
-        document.getElementById('modalQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiLink)}`;
-        document.getElementById('payModal').style.display = 'flex';
-    }
+            // 2. UPI App ko direct open karne ka link (Deep link for GPay/PhonePe/Paytm)
+            const transactionNote = `Payment_for_${planName.replace(/ /g, '_')}`;
+            const upiLink = `upi://pay?pa=${myUPI_ID}&pn=${myName}&am=${amount}&cu=INR&tn=${transactionNote}`;
+            
+            // 3. User ka phone payment app open karega
+            window.location.href = upiLink;
 
-    function closeModal() {
-        document.getElementById('payModal').style.display = 'none';
-    }
-
-    async function selectTrial(planKey) {
-        if (!telegramId) {
-            alert("Telegram User ID nahi mili! Bot se link dobara open karein.");
-            return;
+            // 4. Alert to remind them to send screenshot
+            setTimeout(() => {
+                alert("✅ Payment complete hone ke baad, Wapas Telegram Bot par jayen aur Payment Success ka Screenshot bhejein!");
+            }, 2000);
         }
-        const channelKey = document.getElementById('channelSelect').value;
-        const res = await fetch('/activate-trial', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ telegramId, channelKey })
-        });
-        const data = await res.json();
-        if (data.success) {
-            alert("Free Trial Activated! Bot par link bhej diya gaya hai.");
-            window.location.href = `https://t.me/Payments_Robot_bot?start=payment_done`;
-        } else {
-            alert(data.message);
-        }
-    }
-
-    updatePlans();
-</script>
-
+    </script>
 </body>
 </html>
